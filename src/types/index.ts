@@ -109,6 +109,53 @@ export interface LeaderboardEntry {
   level: number;
 }
 
+export interface Manager {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  level: number;
+  xp: number;
+  revenue: number;
+  invoicesPaid: number;
+  isBlocked: boolean;
+  createdAt: string;
+}
+
+export interface Contest {
+  id: string;
+  title: string;
+  description: string;
+  type: 'individual' | 'team';
+  startDate: string;
+  endDate: string;
+  prize: string;
+  metric: 'revenue' | 'invoices' | 'clients';
+  target: number;
+  teams?: ContestTeam[];
+  isActive: boolean;
+}
+
+export interface ContestTeam {
+  id: string;
+  name: string;
+  memberIds: string[];
+  score: number;
+}
+
+export interface BonusActivity {
+  id: string;
+  title: string;
+  description: string;
+  period: 'daily' | 'weekly' | 'monthly';
+  prize: string;
+  xpReward: number;
+  metric: 'revenue' | 'invoices' | 'clients';
+  target: number;
+  isActive: boolean;
+  createdAt: string;
+}
+
 export interface AppState {
   profile: ManagerProfile;
   clients: Client[];
@@ -122,4 +169,9 @@ export interface AppState {
   dashboardWidgets: WidgetConfig[];
   isAdmin: boolean;
   leaderboard: LeaderboardEntry[];
+  managers: Manager[];
+  contests: Contest[];
+  bonusActivities: BonusActivity[];
+  customAchievements: Achievement[];
+  customBoosts: BoostItem[];
 }

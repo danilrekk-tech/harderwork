@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { LayoutDashboard, FileText, Users, Calendar, Trophy, BarChart3, ShoppingBag, Settings, Menu, X } from 'lucide-react';
+import { LayoutDashboard, FileText, Users, Calendar, Trophy, BarChart3, ShoppingBag, Settings, Menu, X, Shield } from 'lucide-react';
 import { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -56,6 +56,16 @@ export default function AppSidebar() {
             <span>{item.label}</span>
           </NavLink>
         ))}
+        {state.isAdmin && (
+          <NavLink
+            to="/admin"
+            onClick={() => setMobileOpen(false)}
+            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+          >
+            <Shield className="w-5 h-5 flex-shrink-0" />
+            <span>Админ-панель</span>
+          </NavLink>
+        )}
       </nav>
 
       <div className="p-4 border-t border-sidebar-border">

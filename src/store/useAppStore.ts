@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import type { AppState, Client, Invoice, Reminder, WidgetConfig, DealStatus } from '@/types';
+import type { AppState, Client, Invoice, Reminder, WidgetConfig, DealStatus, BoostItem } from '@/types';
 
 const ACHIEVEMENTS_DATA = [
   { id: 'first_invoice', title: 'Первый счёт', description: 'Выставить первый счёт', icon: '📄', xpReward: 50, condition: { type: 'invoices_issued' as const, target: 1 } },
@@ -70,6 +70,11 @@ const INITIAL_STATE: AppState = {
   dashboardWidgets: DEFAULT_WIDGETS,
   isAdmin: false,
   leaderboard: DEFAULT_LEADERBOARD,
+  managers: [],
+  contests: [],
+  bonusActivities: [],
+  customAchievements: [],
+  customBoosts: [],
 };
 
 function loadState(): AppState {
