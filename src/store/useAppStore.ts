@@ -70,6 +70,11 @@ const INITIAL_STATE: AppState = {
   dashboardWidgets: DEFAULT_WIDGETS,
   isAdmin: false,
   leaderboard: DEFAULT_LEADERBOARD,
+  managers: [],
+  contests: [],
+  bonusActivities: [],
+  customAchievements: [],
+  customBoosts: [],
 };
 
 function loadState(): AppState {

@@ -56,6 +56,16 @@ export default function AppSidebar() {
             <span>{item.label}</span>
           </NavLink>
         ))}
+        {state.isAdmin && (
+          <NavLink
+            to="/admin"
+            onClick={() => setMobileOpen(false)}
+            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+          >
+            <Shield className="w-5 h-5 flex-shrink-0" />
+            <span>Админ-панель</span>
+          </NavLink>
+        )}
       </nav>
 
       <div className="p-4 border-t border-sidebar-border">
