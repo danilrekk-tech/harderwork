@@ -12,6 +12,7 @@ import AchievementsPage from "@/pages/AchievementsPage";
 import LeaderboardPage from "@/pages/LeaderboardPage";
 import ShopPage from "@/pages/ShopPage";
 import SettingsPage from "@/pages/SettingsPage";
+import AdminPage from "@/pages/AdminPage";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
