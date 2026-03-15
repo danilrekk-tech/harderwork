@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import type { AppState, Client, Invoice, Reminder, WidgetConfig, DealStatus } from '@/types';
+import type { AppState, Client, Invoice, Reminder, WidgetConfig, DealStatus, BoostItem } from '@/types';
 
 const ACHIEVEMENTS_DATA = [
   { id: 'first_invoice', title: 'Первый счёт', description: 'Выставить первый счёт', icon: '📄', xpReward: 50, condition: { type: 'invoices_issued' as const, target: 1 } },
