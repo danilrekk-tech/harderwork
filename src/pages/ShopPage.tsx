@@ -24,7 +24,7 @@ export default function ShopPage() {
       <p className="text-muted-foreground text-sm mb-6">Тратьте XP на плюшки! У вас: <span className="font-semibold text-accent">{state.profile.totalXpEarned} XP</span></p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {boostItems.map((item, i) => {
+        {allBoosts.map((item, i) => {
           const canAfford = state.profile.totalXpEarned >= item.xpCost;
           const owned = state.boostInventory.filter(b => b === item.id).length;
           return (
