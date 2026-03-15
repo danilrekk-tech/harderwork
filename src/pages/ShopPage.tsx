@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 
 export default function ShopPage() {
   const { state, purchaseBoost, boostItems } = useApp();
+  const allBoosts = [...boostItems, ...state.customBoosts];
 
   function handleBuy(boostId: string, name: string, cost: number) {
     if (state.profile.totalXpEarned < cost) {
