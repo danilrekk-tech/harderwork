@@ -7,6 +7,7 @@ import AdminActivitiesTab from '@/components/admin/AdminActivitiesTab';
 import AdminAchievementsTab from '@/components/admin/AdminAchievementsTab';
 import AdminBoostsTab from '@/components/admin/AdminBoostsTab';
 import AdminStatsTab from '@/components/admin/AdminStatsTab';
+import AdminAnalyticsTab from '@/components/admin/AdminAnalyticsTab';
 
 export default function AdminPage() {
   const { state } = useApp();
@@ -18,6 +19,7 @@ export default function AdminPage() {
       <Tabs defaultValue="managers" className="w-full">
         <TabsList className="flex flex-wrap h-auto gap-1 mb-6">
           <TabsTrigger value="managers">Менеджеры</TabsTrigger>
+          <TabsTrigger value="analytics">Аналитика</TabsTrigger>
           <TabsTrigger value="contests">Конкурсы</TabsTrigger>
           <TabsTrigger value="activities">Активности</TabsTrigger>
           <TabsTrigger value="achievements">Достижения</TabsTrigger>
@@ -25,6 +27,7 @@ export default function AdminPage() {
           <TabsTrigger value="stats">Статистика</TabsTrigger>
         </TabsList>
         <TabsContent value="managers"><AdminManagersTab /></TabsContent>
+        <TabsContent value="analytics"><AdminAnalyticsTab /></TabsContent>
         <TabsContent value="contests"><AdminContestsTab /></TabsContent>
         <TabsContent value="activities"><AdminActivitiesTab /></TabsContent>
         <TabsContent value="achievements"><AdminAchievementsTab /></TabsContent>

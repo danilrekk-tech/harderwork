@@ -1,80 +1,67 @@
 import { useState, useCallback, useEffect } from 'react';
-import type { AppState, Client, Invoice, Reminder, WidgetConfig, DealStatus, BoostItem } from '@/types';
+import type { AppState, Client, Invoice, Reminder, WidgetConfig, DealStatus, ActionEvent, DailyTask } from '@/types';
+import { ACHIEVEMENTS_DATA, COLLECTIONS, BOOST_ITEMS, DEFAULT_WIDGETS, DEFAULT_LEADERBOARD } from './gameData';
+import { toast } from 'sonner';
 
-const ACHIEVEMENTS_DATA = [
-  { id: 'first_invoice', title: 'Первый счёт', description: 'Выставить первый счёт', icon: '📄', xpReward: 50, condition: { type: 'invoices_issued' as const, target: 1 } },
-  { id: 'ten_invoices', title: 'Десятка', description: 'Выставить 10 счетов', icon: '📋', xpReward: 150, condition: { type: 'invoices_issued' as const, target: 10 } },
-  { id: 'fifty_invoices', title: 'Полтинник', description: 'Выставить 50 счетов', icon: '🏆', xpReward: 500, condition: { type: 'invoices_issued' as const, target: 50 } },
-  { id: 'first_payment', title: 'Первая оплата', description: 'Получить первую оплату', icon: '💰', xpReward: 100, condition: { type: 'invoices_paid' as const, target: 1 } },
-  { id: 'ten_payments', title: 'Кассир', description: 'Получить 10 оплат', icon: '💎', xpReward: 300, condition: { type: 'invoices_paid' as const, target: 10 } },
-  { id: 'five_clients', title: 'Нетворкер', description: 'Обработать 5 клиентов', icon: '🤝', xpReward: 100, condition: { type: 'clients_processed' as const, target: 5 } },
-  { id: 'twenty_clients', title: 'Мастер продаж', description: 'Обработать 20 клиентов', icon: '⭐', xpReward: 400, condition: { type: 'clients_processed' as const, target: 20 } },
-  { id: 'streak_3', title: 'На волне', description: '3 дня подряд активности', icon: '🔥', xpReward: 75, condition: { type: 'streak_days' as const, target: 3 } },
-  { id: 'streak_7', title: 'Неделя огня', description: '7 дней подряд активности', icon: '🔥', xpReward: 200, condition: { type: 'streak_days' as const, target: 7 } },
-  { id: 'revenue_100k', title: 'Стотысячник', description: 'Общая выручка 100 000', icon: '💵', xpReward: 500, condition: { type: 'total_revenue' as const, target: 100000 } },
-  { id: 'revenue_1m', title: 'Миллионер', description: 'Общая выручка 1 000 000', icon: '🏅', xpReward: 2000, condition: { type: 'total_revenue' as const, target: 1000000 } },
-  { id: 'level_5', title: 'Уровень 5', description: 'Достичь 5 уровня', icon: '🎯', xpReward: 250, condition: { type: 'xp_earned' as const, target: 1000 } },
-];
+function calcLevel(totalXp: number) {
+  let level = 1, xpNeeded = 200, remaining = totalXp;
+  while (remaining >= xpNeeded) {
+    remaining -= xpNeeded;
+    level++;
+    xpNeeded = Math.floor(xpNeeded * 1.3);
+  }
+  return { level, xp: remaining, xpToNextLevel: xpNeeded };
+}
 
-const BOOST_ITEMS = [
-  { id: 'coffee', name: '☕ Кофе-брейк', description: '15 минут отдыха заслужено!', icon: '☕', xpCost: 100, effect: 'rest' },
-  { id: 'music', name: '🎵 Музыка на час', description: 'Слушай любимую музыку', icon: '🎵', xpCost: 50, effect: 'music' },
-  { id: 'late_start', name: '😴 Поздний старт', description: 'Начни смену на 30 мин позже', icon: '😴', xpCost: 200, effect: 'late_start' },
-  { id: 'early_finish', name: '🏃 Ранний уход', description: 'Закончи смену на 30 мин раньше', icon: '🏃', xpCost: 300, effect: 'early_finish' },
-  { id: 'lunch_ext', name: '🍕 Длинный обед', description: 'Продли обед на 30 минут', icon: '🍕', xpCost: 150, effect: 'lunch' },
-  { id: 'theme', name: '🎨 Кастом тема', description: 'Смени цвет интерфейса на день', icon: '🎨', xpCost: 75, effect: 'theme' },
-];
+function todayStr() { return new Date().toISOString().split('T')[0]; }
 
-const DEFAULT_WIDGETS: WidgetConfig[] = [
-  { id: 'w1', type: 'plan_progress', position: 0, size: 'large', visible: true },
-  { id: 'w2', type: 'invoices', position: 1, size: 'medium', visible: true },
-  { id: 'w3', type: 'clients', position: 2, size: 'small', visible: true },
-  { id: 'w4', type: 'work_days_left', position: 3, size: 'small', visible: true },
-  { id: 'w5', type: 'shift_timer', position: 4, size: 'small', visible: true },
-  { id: 'w6', type: 'leaderboard', position: 5, size: 'medium', visible: true },
-  { id: 'w7', type: 'motivation', position: 6, size: 'medium', visible: true },
-  { id: 'w8', type: 'xp_progress', position: 7, size: 'medium', visible: true },
-];
+function currentMonthInvoices(invoices: Invoice[]) {
+  const now = new Date();
+  const m = now.getMonth(), y = now.getFullYear();
+  return invoices.filter(i => { const d = new Date(i.issuedAt); return d.getMonth() === m && d.getFullYear() === y; });
+}
 
-const DEFAULT_LEADERBOARD = [
-  { id: '1', name: 'Алексей М.', revenue: 520000, invoicesPaid: 23, level: 8 },
-  { id: '2', name: 'Мария К.', revenue: 480000, invoicesPaid: 19, level: 7 },
-  { id: '3', name: 'Дмитрий С.', revenue: 350000, invoicesPaid: 15, level: 6 },
-  { id: '4', name: 'Елена В.', revenue: 290000, invoicesPaid: 12, level: 5 },
-  { id: '5', name: 'Игорь Н.', revenue: 210000, invoicesPaid: 9, level: 4 },
-];
+function generateDailyTasksForDate(date: string): DailyTask[] {
+  return [
+    { id: `dt_cli_${date}`, type: 'clients', title: 'Обработать 5 клиентов', target: 5, current: 0, xpReward: 50, completed: false, date },
+    { id: `dt_inv_${date}`, type: 'invoices', title: 'Выставить 3 счёта', target: 3, current: 0, xpReward: 75, completed: false, date },
+    { id: `dt_pay_${date}`, type: 'payments', title: 'Получить 2 оплаты', target: 2, current: 0, xpReward: 100, completed: false, date },
+  ];
+}
 
 const INITIAL_STATE: AppState = {
   profile: {
-    name: 'Менеджер',
-    level: 1,
-    xp: 0,
-    xpToNextLevel: 200,
-    totalXpEarned: 0,
-    streakDays: 0,
-    lastActiveDate: '',
+    name: 'Менеджер', level: 1, xp: 0, xpToNextLevel: 200,
+    totalXpEarned: 0, xpSpent: 0, streakDays: 0, lastActiveDate: '', processedClientsCount: 0,
   },
-  clients: [],
-  invoices: [],
-  reminders: [],
+  clients: [], invoices: [], reminders: [],
   achievements: ACHIEVEMENTS_DATA,
   unlockedAchievements: [],
+  collections: COLLECTIONS,
+  completedCollections: [],
   boostInventory: [],
-  planSettings: { type: 'amount', target: 500000, period: 'monthly' },
-  workSchedule: {
-    workDays: [1, 2, 3, 4, 5],
-    startTime: '09:00',
-    endTime: '18:00',
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+  skills: { closing: 0, processing: 0, planning: 0, availablePoints: 0 },
+  eventLog: [],
+  momentum: { value: 0 },
+  combo: { count: 0, maxCombo: 0 },
+  personalRecords: {
+    maxInvoicesPerDay: { value: 0 }, maxPaymentsPerDay: { value: 0 },
+    maxClientsPerDay: { value: 0 }, maxRevenuePerDay: { value: 0 },
   },
+  dailyTasks: generateDailyTasksForDate(todayStr()),
+  focusSession: { isActive: false, durationMinutes: 25, actionsCount: 0, bonusXpPercent: 25 },
+  multiLevelPlan: {
+    invoices: { min: 10, norm: 15, challenge: 20 },
+    payments: { min: 5, norm: 8, challenge: 12 },
+  },
+  season: { id: 's1', number: 1, startDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString(), endDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString(), isActive: true },
+  planSettings: { type: 'amount', target: 500000, period: 'monthly' },
+  workSchedule: { workDays: [1, 2, 3, 4, 5], startTime: '09:00', endTime: '18:00', timezone: Intl.DateTimeFormat().resolvedOptions().timeZone },
   dashboardWidgets: DEFAULT_WIDGETS,
-  isAdmin: false,
-  leaderboard: DEFAULT_LEADERBOARD,
-  managers: [],
-  contests: [],
-  bonusActivities: [],
-  customAchievements: [],
-  customBoosts: [],
+  isAdmin: false, leaderboard: DEFAULT_LEADERBOARD,
+  managers: [], contests: [], bonusActivities: [],
+  customAchievements: [], customBoosts: [],
+  planCompletedThisMonth: false,
 };
 
 function loadState(): AppState {
@@ -82,7 +69,13 @@ function loadState(): AppState {
     const saved = localStorage.getItem('sales_app_state');
     if (saved) {
       const parsed = JSON.parse(saved);
-      return { ...INITIAL_STATE, ...parsed, achievements: ACHIEVEMENTS_DATA };
+      const state = { ...INITIAL_STATE, ...parsed, achievements: ACHIEVEMENTS_DATA, collections: COLLECTIONS };
+      // Ensure daily tasks are fresh
+      const today = todayStr();
+      if (!state.dailyTasks?.length || state.dailyTasks[0]?.date !== today) {
+        state.dailyTasks = generateDailyTasksForDate(today);
+      }
+      return state;
     }
   } catch { /* ignore */ }
   return INITIAL_STATE;
@@ -92,45 +85,265 @@ function saveState(state: AppState) {
   localStorage.setItem('sales_app_state', JSON.stringify(state));
 }
 
-function calcLevel(totalXp: number): { level: number; xp: number; xpToNextLevel: number } {
-  let level = 1;
-  let xpNeeded = 200;
-  let remaining = totalXp;
-  while (remaining >= xpNeeded) {
-    remaining -= xpNeeded;
-    level++;
-    xpNeeded = Math.floor(xpNeeded * 1.3);
+// Core action processor - handles XP, combo, momentum, events, daily tasks, streaks
+function performAction(prev: AppState, actionType: ActionEvent['type'], xpBase: number, description: string): AppState {
+  const now = new Date().toISOString();
+  const today = todayStr();
+
+  // Combo
+  const comboWindow = 30000;
+  const timeSinceLast = prev.combo.lastActionAt ? Date.now() - new Date(prev.combo.lastActionAt).getTime() : Infinity;
+  const newCombo = timeSinceLast < comboWindow ? prev.combo.count + 1 : 1;
+  const comboMult = 1 + Math.min(newCombo - 1, 10) * 0.1;
+  const maxCombo = Math.max(prev.combo.maxCombo, newCombo);
+
+  // Momentum
+  const decayRate = 2;
+  const timeSinceMomentum = prev.momentum.lastActionAt ? (Date.now() - new Date(prev.momentum.lastActionAt).getTime()) / 60000 : 0;
+  const decayed = Math.max(0, prev.momentum.value - timeSinceMomentum * decayRate);
+  const newMomentum = Math.min(100, decayed + 10);
+  const isMomentumActive = prev.momentum.bonusActiveUntil ? new Date(prev.momentum.bonusActiveUntil) > new Date() : false;
+  const momentumMult = isMomentumActive ? 1.5 : 1;
+  let bonusActiveUntil = prev.momentum.bonusActiveUntil;
+  if (newMomentum >= 100 && !isMomentumActive) {
+    bonusActiveUntil = new Date(Date.now() + 180000).toISOString();
+    toast('🔥 Sales Momentum MAX! XP x1.5 на 3 минуты!');
   }
-  return { level, xp: remaining, xpToNextLevel: xpNeeded };
+
+  // Skill bonus
+  let skillMult = 1;
+  if (actionType === 'client_added') skillMult = 1 + prev.skills.processing * 0.05;
+  if (actionType === 'invoice_issued') skillMult = 1 + prev.skills.planning * 0.05;
+  if (actionType === 'invoice_paid') skillMult = 1 + prev.skills.closing * 0.05;
+
+  // Focus bonus
+  const focusMult = prev.focusSession.isActive ? 1 + prev.focusSession.bonusXpPercent / 100 : 1;
+
+  const totalXp = Math.round(xpBase * comboMult * momentumMult * skillMult * focusMult);
+  const newTotalXp = prev.profile.totalXpEarned + totalXp;
+  const { level, xp, xpToNextLevel } = calcLevel(newTotalXp - prev.profile.xpSpent);
+  const oldLevel = prev.profile.level;
+  const skillPointsGained = Math.max(0, level - oldLevel);
+
+  // Combo toast
+  if (newCombo >= 3) toast(`⚡ Комбо x${newCombo}! +${Math.round((comboMult - 1) * 100)}% XP`);
+
+  // XP toast
+  const bonusInfo = totalXp > xpBase ? ` (x${(totalXp / xpBase).toFixed(1)})` : '';
+  toast(`+${totalXp} XP${bonusInfo}`);
+
+  // Level up
+  if (level > oldLevel) toast.success(`🎉 Уровень ${level}! +${skillPointsGained} очков навыков`);
+
+  // Event
+  const event: ActionEvent = { id: crypto.randomUUID(), type: actionType, description, xpEarned: totalXp, timestamp: now, managerName: prev.profile.name };
+
+  // Streak
+  const lastActive = prev.profile.lastActiveDate;
+  let streakDays = prev.profile.streakDays;
+  if (lastActive !== today) {
+    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+    streakDays = lastActive === yesterday ? streakDays + 1 : 1;
+  }
+
+  // Daily tasks
+  const dailyTasks = prev.dailyTasks.map(task => {
+    if (task.date !== today || task.completed) return task;
+    const match = (task.type === 'clients' && actionType === 'client_added')
+      || (task.type === 'invoices' && actionType === 'invoice_issued')
+      || (task.type === 'payments' && actionType === 'invoice_paid');
+    if (!match) return task;
+    const newCurrent = task.current + 1;
+    const completed = newCurrent >= task.target;
+    if (completed && !task.completed) toast.success(`✅ Задание "${task.title}" выполнено! +${task.xpReward} XP`);
+    return { ...task, current: newCurrent, completed };
+  });
+
+  // Add daily task XP
+  const dailyTaskXp = dailyTasks.filter(t => t.completed && !prev.dailyTasks.find(pt => pt.id === t.id)?.completed).reduce((s, t) => s + t.xpReward, 0);
+  const finalTotalXp = newTotalXp + dailyTaskXp;
+  const finalLevel = calcLevel(finalTotalXp - prev.profile.xpSpent);
+
+  return {
+    ...prev,
+    profile: {
+      ...prev.profile,
+      level: finalLevel.level, xp: finalLevel.xp, xpToNextLevel: finalLevel.xpToNextLevel,
+      totalXpEarned: finalTotalXp, streakDays, lastActiveDate: today,
+    },
+    skills: { ...prev.skills, availablePoints: prev.skills.availablePoints + skillPointsGained },
+    combo: { count: newCombo, maxCombo, lastActionAt: now },
+    momentum: { value: newMomentum, lastActionAt: now, bonusActiveUntil },
+    eventLog: [event, ...prev.eventLog].slice(0, 200),
+    dailyTasks,
+    focusSession: prev.focusSession.isActive ? { ...prev.focusSession, actionsCount: prev.focusSession.actionsCount + 1 } : prev.focusSession,
+  };
+}
+
+function checkAllAchievements(state: AppState): AppState {
+  const monthInvs = currentMonthInvoices(state.invoices);
+  const issuedCount = state.invoices.length;
+  const paidCount = state.invoices.filter(i => i.status === 'paid').length;
+  const clientCount = state.profile.processedClientsCount;
+  const totalRevenue = state.invoices.filter(i => i.status === 'paid').reduce((s, i) => s + i.amount, 0);
+
+  // Plan completion %
+  const planProgress = state.planSettings.type === 'amount'
+    ? (totalRevenue / state.planSettings.target) * 100
+    : (issuedCount / state.planSettings.target) * 100;
+  const planCompleted = planProgress >= 100;
+  const planOverfulfilled = planProgress;
+
+  const newUnlocks: string[] = [];
+  for (const ach of state.achievements) {
+    if (state.unlockedAchievements.includes(ach.id)) continue;
+    let met = false;
+    switch (ach.condition.type) {
+      case 'invoices_issued': met = issuedCount >= ach.condition.target; break;
+      case 'invoices_paid': met = paidCount >= ach.condition.target; break;
+      case 'clients_processed': met = clientCount >= ach.condition.target; break;
+      case 'streak_days': met = state.profile.streakDays >= ach.condition.target; break;
+      case 'total_revenue': met = totalRevenue >= ach.condition.target; break;
+      case 'xp_earned': met = state.profile.totalXpEarned >= ach.condition.target; break;
+      case 'combo_max': met = state.combo.maxCombo >= ach.condition.target; break;
+      case 'plan_completed': met = planCompleted; break;
+      case 'plan_overfulfilled': met = planOverfulfilled >= ach.condition.target; break;
+      case 'level_reached': met = state.profile.level >= ach.condition.target; break;
+    }
+    if (met) newUnlocks.push(ach.id);
+  }
+
+  if (newUnlocks.length === 0) return { ...state, planCompletedThisMonth: planCompleted };
+
+  const xpGain = newUnlocks.reduce((s, id) => s + (state.achievements.find(a => a.id === id)?.xpReward || 0), 0);
+  const newTotal = state.profile.totalXpEarned + xpGain;
+  const lvl = calcLevel(newTotal - state.profile.xpSpent);
+
+  newUnlocks.forEach(id => {
+    const ach = state.achievements.find(a => a.id === id);
+    if (ach) toast.success(`🏆 ${ach.title} — +${ach.xpReward} XP`);
+  });
+
+  // Check collections
+  const allUnlocked = [...state.unlockedAchievements, ...newUnlocks];
+  const newCompletedCollections: string[] = [];
+  let collectionXp = 0;
+  for (const col of state.collections) {
+    if (state.completedCollections.includes(col.id)) continue;
+    if (col.achievementIds.every(aid => allUnlocked.includes(aid))) {
+      newCompletedCollections.push(col.id);
+      collectionXp += col.bonusXp;
+      toast.success(`🎖 Коллекция "${col.name}" собрана! +${col.bonusXp} XP`);
+    }
+  }
+
+  const finalTotal = newTotal + collectionXp;
+  const finalLvl = calcLevel(finalTotal - state.profile.xpSpent);
+
+  return {
+    ...state,
+    unlockedAchievements: allUnlocked,
+    completedCollections: [...state.completedCollections, ...newCompletedCollections],
+    profile: { ...state.profile, level: finalLvl.level, xp: finalLvl.xp, xpToNextLevel: finalLvl.xpToNextLevel, totalXpEarned: finalTotal },
+    planCompletedThisMonth: planCompleted,
+  };
+}
+
+function checkRecords(state: AppState): AppState {
+  const today = todayStr();
+  const todayEvents = state.eventLog.filter(e => e.timestamp.startsWith(today));
+  const todayInvoices = todayEvents.filter(e => e.type === 'invoice_issued').length;
+  const todayPayments = todayEvents.filter(e => e.type === 'invoice_paid').length;
+  const todayClients = todayEvents.filter(e => e.type === 'client_added').length;
+  const todayRevenue = state.invoices
+    .filter(i => i.status === 'paid' && i.paidAt?.startsWith(today))
+    .reduce((s, i) => s + i.amount, 0);
+
+  const records = { ...state.personalRecords };
+  let broken = false;
+
+  if (todayInvoices > records.maxInvoicesPerDay.value) {
+    records.maxInvoicesPerDay = { value: todayInvoices, date: today };
+    broken = true;
+  }
+  if (todayPayments > records.maxPaymentsPerDay.value) {
+    records.maxPaymentsPerDay = { value: todayPayments, date: today };
+    broken = true;
+  }
+  if (todayClients > records.maxClientsPerDay.value) {
+    records.maxClientsPerDay = { value: todayClients, date: today };
+    broken = true;
+  }
+  if (todayRevenue > records.maxRevenuePerDay.value) {
+    records.maxRevenuePerDay = { value: todayRevenue, date: today };
+    broken = true;
+  }
+
+  if (broken) toast('🏅 Новый личный рекорд!');
+  return { ...state, personalRecords: records };
 }
 
 export function useAppStore() {
   const [state, setState] = useState<AppState>(loadState);
-
   useEffect(() => { saveState(state); }, [state]);
 
+  // Refresh daily tasks on day change
+  useEffect(() => {
+    const today = todayStr();
+    if (!state.dailyTasks.length || state.dailyTasks[0]?.date !== today) {
+      setState(prev => ({ ...prev, dailyTasks: generateDailyTasksForDate(today) }));
+    }
+  }, []);
+
   const updateState = useCallback((updater: (prev: AppState) => Partial<AppState>) => {
+    setState(prev => ({ ...prev, ...updater(prev) }));
+  }, []);
+
+  const quickAddClient = useCallback(() => {
     setState(prev => {
-      const updates = updater(prev);
-      return { ...prev, ...updates };
+      const count = prev.profile.processedClientsCount + 1;
+      let s = { ...prev, profile: { ...prev.profile, processedClientsCount: count } };
+      s = performAction(s, 'client_added', 25, `Обработан клиент #${count}`);
+      s = checkAllAchievements(s);
+      s = checkRecords(s);
+      return s;
     });
   }, []);
 
-  const addXp = useCallback((amount: number) => {
+  const quickAddInvoice = useCallback((amount: number) => {
     setState(prev => {
-      const newTotal = prev.profile.totalXpEarned + amount;
-      const { level, xp, xpToNextLevel } = calcLevel(newTotal);
-      return {
+      const invoice: Invoice = { id: crypto.randomUUID(), clientId: '', amount, status: 'issued', issuedAt: new Date().toISOString() };
+      let s = { ...prev, invoices: [...prev.invoices, invoice] };
+      s = performAction(s, 'invoice_issued', 50, `Выставлен счёт на ${amount.toLocaleString()} ₽`);
+      s = checkAllAchievements(s);
+      s = checkRecords(s);
+      return s;
+    });
+  }, []);
+
+  const quickPayInvoice = useCallback((invoiceId: string) => {
+    setState(prev => {
+      const inv = prev.invoices.find(i => i.id === invoiceId);
+      if (!inv || inv.status === 'paid') return prev;
+      let s = {
         ...prev,
-        profile: { ...prev.profile, level, xp, xpToNextLevel, totalXpEarned: newTotal },
+        invoices: prev.invoices.map(i => i.id === invoiceId ? { ...i, status: 'paid' as const, paidAt: new Date().toISOString() } : i),
       };
+      s = performAction(s, 'invoice_paid', 100, `Оплачен счёт на ${inv.amount.toLocaleString()} ₽`);
+      s = checkAllAchievements(s);
+      s = checkRecords(s);
+      return s;
     });
   }, []);
 
   const addClient = useCallback((client: Client) => {
-    setState(prev => ({ ...prev, clients: [...prev.clients, client] }));
-    addXp(25);
-  }, [addXp]);
+    setState(prev => {
+      let s = { ...prev, clients: [...prev.clients, client], profile: { ...prev.profile, processedClientsCount: prev.profile.processedClientsCount + 1 } };
+      s = performAction(s, 'client_added', 25, `Добавлен клиент: ${client.name}`);
+      s = checkAllAchievements(s);
+      return s;
+    });
+  }, []);
 
   const updateClient = useCallback((id: string, updates: Partial<Client>) => {
     setState(prev => ({
@@ -140,113 +353,120 @@ export function useAppStore() {
   }, []);
 
   const addInvoice = useCallback((invoice: Invoice) => {
-    setState(prev => ({ ...prev, invoices: [...prev.invoices, invoice] }));
-    addXp(50);
-  }, [addXp]);
+    setState(prev => {
+      let s = { ...prev, invoices: [...prev.invoices, invoice] };
+      s = performAction(s, 'invoice_issued', 50, `Выставлен счёт на ${invoice.amount.toLocaleString()} ₽`);
+      s = checkAllAchievements(s);
+      return s;
+    });
+  }, []);
 
   const payInvoice = useCallback((id: string) => {
-    setState(prev => ({
-      ...prev,
-      invoices: prev.invoices.map(inv =>
-        inv.id === id ? { ...inv, status: 'paid' as const, paidAt: new Date().toISOString() } : inv
-      ),
-    }));
-    addXp(100);
-  }, [addXp]);
+    setState(prev => {
+      const inv = prev.invoices.find(i => i.id === id);
+      if (!inv) return prev;
+      let s = { ...prev, invoices: prev.invoices.map(i => i.id === id ? { ...i, status: 'paid' as const, paidAt: new Date().toISOString() } : i) };
+      s = performAction(s, 'invoice_paid', 100, `Оплачен счёт на ${inv.amount.toLocaleString()} ₽`);
+      s = checkAllAchievements(s);
+      return s;
+    });
+  }, []);
 
   const addReminder = useCallback((reminder: Reminder) => {
     setState(prev => ({ ...prev, reminders: [...prev.reminders, reminder] }));
   }, []);
 
   const completeReminder = useCallback((id: string) => {
-    setState(prev => ({
-      ...prev,
-      reminders: prev.reminders.map(r => r.id === id ? { ...r, completed: true } : r),
-    }));
-    addXp(15);
-  }, [addXp]);
+    setState(prev => {
+      let s = { ...prev, reminders: prev.reminders.map(r => r.id === id ? { ...r, completed: true } : r) };
+      s = performAction(s, 'client_added', 15, 'Напоминание выполнено');
+      return s;
+    });
+  }, []);
 
   const updateWidgets = useCallback((widgets: WidgetConfig[]) => {
     setState(prev => ({ ...prev, dashboardWidgets: widgets }));
   }, []);
 
   const purchaseBoost = useCallback((boostId: string) => {
-    const boost = BOOST_ITEMS.find(b => b.id === boostId);
+    const allBoosts = [...BOOST_ITEMS];
+    const boost = allBoosts.find(b => b.id === boostId) || state.customBoosts.find(b => b.id === boostId);
     if (!boost) return false;
-    let success = false;
-    setState(prev => {
-      if (prev.profile.xp >= boost.xpCost) {
-        // We deduct from totalXpEarned conceptually but keep xp as spendable
-        const newTotal = prev.profile.totalXpEarned - boost.xpCost;
-        const { level, xp, xpToNextLevel } = calcLevel(Math.max(0, newTotal));
-        success = true;
-        return {
-          ...prev,
-          profile: { ...prev.profile, level, xp, xpToNextLevel, totalXpEarned: Math.max(0, newTotal) },
-          boostInventory: [...prev.boostInventory, boostId],
-        };
-      }
-      return prev;
-    });
-    return success;
-  }, []);
+    const balance = state.profile.totalXpEarned - state.profile.xpSpent;
+    if (balance < boost.xpCost) return false;
+    setState(prev => ({
+      ...prev,
+      profile: { ...prev.profile, xpSpent: prev.profile.xpSpent + boost.xpCost },
+      boostInventory: [...prev.boostInventory, boostId],
+    }));
+    return true;
+  }, [state.profile.totalXpEarned, state.profile.xpSpent, state.customBoosts]);
 
   const checkAchievements = useCallback(() => {
+    setState(prev => checkAllAchievements(prev));
+  }, []);
+
+  const updateDealStatus = useCallback((clientId: string, status: DealStatus) => {
     setState(prev => {
-      const issuedCount = prev.invoices.length;
-      const paidCount = prev.invoices.filter(i => i.status === 'paid').length;
-      const clientCount = prev.clients.length;
-      const totalRevenue = prev.invoices.filter(i => i.status === 'paid').reduce((s, i) => s + i.amount, 0);
+      let s = { ...prev, clients: prev.clients.map(c => c.id === clientId ? { ...c, dealStatus: status, updatedAt: new Date().toISOString() } : c) };
+      if (status === 'invoice_sent') s = performAction(s, 'invoice_issued', 30, 'Счёт выставлен клиенту');
+      if (status === 'invoice_paid') s = performAction(s, 'invoice_paid', 80, 'Сделка закрыта');
+      return checkAllAchievements(s);
+    });
+  }, []);
 
-      const newUnlocks: string[] = [];
-      for (const ach of prev.achievements) {
-        if (prev.unlockedAchievements.includes(ach.id)) continue;
-        let met = false;
-        switch (ach.condition.type) {
-          case 'invoices_issued': met = issuedCount >= ach.condition.target; break;
-          case 'invoices_paid': met = paidCount >= ach.condition.target; break;
-          case 'clients_processed': met = clientCount >= ach.condition.target; break;
-          case 'streak_days': met = prev.profile.streakDays >= ach.condition.target; break;
-          case 'total_revenue': met = totalRevenue >= ach.condition.target; break;
-          case 'xp_earned': met = prev.profile.totalXpEarned >= ach.condition.target; break;
-        }
-        if (met) newUnlocks.push(ach.id);
-      }
-
-      if (newUnlocks.length === 0) return prev;
-
-      const xpGain = newUnlocks.reduce((s, id) => s + (prev.achievements.find(a => a.id === id)?.xpReward || 0), 0);
-      const newTotal = prev.profile.totalXpEarned + xpGain;
-      const { level, xp, xpToNextLevel } = calcLevel(newTotal);
-
+  const allocateSkillPoint = useCallback((skill: 'closing' | 'processing' | 'planning') => {
+    setState(prev => {
+      if (prev.skills.availablePoints <= 0 || prev.skills[skill] >= 10) return prev;
       return {
         ...prev,
-        unlockedAchievements: [...prev.unlockedAchievements, ...newUnlocks],
-        profile: { ...prev.profile, level, xp, xpToNextLevel, totalXpEarned: newTotal },
+        skills: { ...prev.skills, [skill]: prev.skills[skill] + 1, availablePoints: prev.skills.availablePoints - 1 },
       };
     });
   }, []);
 
-  const updateDealStatus = useCallback((clientId: string, status: DealStatus) => {
-    updateClient(clientId, { dealStatus: status });
-    if (status === 'invoice_sent') addXp(30);
-    if (status === 'invoice_paid') addXp(80);
-  }, [updateClient, addXp]);
+  const startFocusSession = useCallback((minutes: number) => {
+    setState(prev => ({
+      ...prev,
+      focusSession: { isActive: true, startedAt: new Date().toISOString(), durationMinutes: minutes, actionsCount: 0, bonusXpPercent: 25 },
+    }));
+    toast('🎯 Фокус-сессия начата! +25% к XP');
+  }, []);
+
+  const endFocusSession = useCallback(() => {
+    setState(prev => {
+      if (!prev.focusSession.isActive) return prev;
+      const bonus = prev.focusSession.actionsCount * 10;
+      if (bonus > 0) {
+        toast.success(`🎯 Фокус-сессия завершена! ${prev.focusSession.actionsCount} действий, +${bonus} бонус XP`);
+      }
+      const newTotal = prev.profile.totalXpEarned + bonus;
+      const lvl = calcLevel(newTotal - prev.profile.xpSpent);
+      const event: ActionEvent = { id: crypto.randomUUID(), type: 'focus_completed', description: `Фокус-сессия: ${prev.focusSession.actionsCount} действий`, xpEarned: bonus, timestamp: new Date().toISOString(), managerName: prev.profile.name };
+      return {
+        ...prev,
+        profile: { ...prev.profile, totalXpEarned: newTotal, level: lvl.level, xp: lvl.xp, xpToNextLevel: lvl.xpToNextLevel },
+        focusSession: { ...prev.focusSession, isActive: false },
+        eventLog: [event, ...prev.eventLog].slice(0, 200),
+      };
+    });
+  }, []);
+
+  const addXp = useCallback((amount: number) => {
+    setState(prev => {
+      const newTotal = prev.profile.totalXpEarned + amount;
+      const lvl = calcLevel(newTotal - prev.profile.xpSpent);
+      return { ...prev, profile: { ...prev.profile, totalXpEarned: newTotal, level: lvl.level, xp: lvl.xp, xpToNextLevel: lvl.xpToNextLevel } };
+    });
+  }, []);
 
   return {
-    state,
-    updateState,
-    addXp,
-    addClient,
-    updateClient,
-    addInvoice,
-    payInvoice,
-    addReminder,
-    completeReminder,
-    updateWidgets,
-    purchaseBoost,
-    checkAchievements,
-    updateDealStatus,
+    state, updateState, addXp,
+    quickAddClient, quickAddInvoice, quickPayInvoice,
+    addClient, updateClient, addInvoice, payInvoice,
+    addReminder, completeReminder, updateWidgets,
+    purchaseBoost, checkAchievements, updateDealStatus,
+    allocateSkillPoint, startFocusSession, endFocusSession,
     boostItems: BOOST_ITEMS,
   };
 }

@@ -43,6 +43,10 @@ export default function AdminManagersTab() {
         xp: 0,
         revenue: 0,
         invoicesPaid: 0,
+        invoicesIssued: 0,
+        clientsProcessed: 0,
+        streakDays: 0,
+        disciplineIndex: 0,
         isBlocked: false,
         createdAt: new Date().toISOString(),
       };
