@@ -29,10 +29,7 @@ export default function SettingsPage() {
           <div className="space-y-3">
             <div>
               <Label className="text-sm text-muted-foreground">Имя</Label>
-              <Input
-                value={state.profile.name}
-                onChange={e => updateState(() => ({ profile: { ...state.profile, name: e.target.value } }))}
-              />
+              <Input value={state.profile.name} onChange={e => updateState(() => ({ profile: { ...state.profile, name: e.target.value } }))} />
             </div>
           </div>
         </div>
@@ -43,10 +40,7 @@ export default function SettingsPage() {
           <div className="space-y-3">
             <div>
               <Label className="text-sm text-muted-foreground">Тип плана</Label>
-              <Select
-                value={state.planSettings.type}
-                onValueChange={v => updateState(() => ({ planSettings: { ...state.planSettings, type: v as 'amount' | 'count' } }))}
-              >
+              <Select value={state.planSettings.type} onValueChange={v => updateState(() => ({ planSettings: { ...state.planSettings, type: v as 'amount' | 'count' } }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="amount">По сумме (₽)</SelectItem>
@@ -56,11 +50,48 @@ export default function SettingsPage() {
             </div>
             <div>
               <Label className="text-sm text-muted-foreground">Цель</Label>
-              <Input
-                type="number"
-                value={state.planSettings.target}
-                onChange={e => updateState(() => ({ planSettings: { ...state.planSettings, target: Number(e.target.value) } }))}
-              />
+              <Input type="number" value={state.planSettings.target} onChange={e => updateState(() => ({ planSettings: { ...state.planSettings, target: Number(e.target.value) } }))} />
+            </div>
+          </div>
+        </div>
+
+        {/* Multi-level Plan */}
+        <div className="widget-card">
+          <h2 className="font-display font-semibold text-foreground mb-4">Многоуровневые цели</h2>
+          <div className="space-y-4">
+            <div>
+              <Label className="text-sm text-muted-foreground font-medium">📄 Счета</Label>
+              <div className="grid grid-cols-3 gap-2 mt-1">
+                {['min', 'norm', 'challenge'].map(level => (
+                  <div key={level}>
+                    <Label className="text-xs text-muted-foreground">{level === 'min' ? 'Минимум' : level === 'norm' ? 'Норма' : 'Челлендж'}</Label>
+                    <Input
+                      type="number"
+                      value={state.multiLevelPlan.invoices[level as keyof typeof state.multiLevelPlan.invoices]}
+                      onChange={e => updateState(() => ({
+                        multiLevelPlan: { ...state.multiLevelPlan, invoices: { ...state.multiLevelPlan.invoices, [level]: Number(e.target.value) } }
+                      }))}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div>
+              <Label className="text-sm text-muted-foreground font-medium">💰 Оплаты</Label>
+              <div className="grid grid-cols-3 gap-2 mt-1">
+                {['min', 'norm', 'challenge'].map(level => (
+                  <div key={level}>
+                    <Label className="text-xs text-muted-foreground">{level === 'min' ? 'Минимум' : level === 'norm' ? 'Норма' : 'Челлендж'}</Label>
+                    <Input
+                      type="number"
+                      value={state.multiLevelPlan.payments[level as keyof typeof state.multiLevelPlan.payments]}
+                      onChange={e => updateState(() => ({
+                        multiLevelPlan: { ...state.multiLevelPlan, payments: { ...state.multiLevelPlan.payments, [level]: Number(e.target.value) } }
+                      }))}
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -73,12 +104,7 @@ export default function SettingsPage() {
               <Label className="text-sm text-muted-foreground mb-2 block">Рабочие дни</Label>
               <div className="flex gap-2 flex-wrap">
                 {DAY_LABELS.map((label, i) => (
-                  <Button
-                    key={i}
-                    variant={state.workSchedule.workDays.includes(i) ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => toggleWorkDay(i)}
-                  >
+                  <Button key={i} variant={state.workSchedule.workDays.includes(i) ? 'default' : 'outline'} size="sm" onClick={() => toggleWorkDay(i)}>
                     {label}
                   </Button>
                 ))}
@@ -87,19 +113,11 @@ export default function SettingsPage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label className="text-sm text-muted-foreground">Начало смены</Label>
-                <Input
-                  type="time"
-                  value={state.workSchedule.startTime}
-                  onChange={e => updateState(() => ({ workSchedule: { ...state.workSchedule, startTime: e.target.value } }))}
-                />
+                <Input type="time" value={state.workSchedule.startTime} onChange={e => updateState(() => ({ workSchedule: { ...state.workSchedule, startTime: e.target.value } }))} />
               </div>
               <div>
                 <Label className="text-sm text-muted-foreground">Конец смены</Label>
-                <Input
-                  type="time"
-                  value={state.workSchedule.endTime}
-                  onChange={e => updateState(() => ({ workSchedule: { ...state.workSchedule, endTime: e.target.value } }))}
-                />
+                <Input type="time" value={state.workSchedule.endTime} onChange={e => updateState(() => ({ workSchedule: { ...state.workSchedule, endTime: e.target.value } }))} />
               </div>
             </div>
           </div>
@@ -109,30 +127,15 @@ export default function SettingsPage() {
         <div className="widget-card">
           <h2 className="font-display font-semibold text-foreground mb-4">Администратор</h2>
           <div className="flex items-center gap-3">
-            <Switch
-              checked={state.isAdmin}
-              onCheckedChange={v => {
-                updateState(() => ({ isAdmin: v }));
-                toast.success(v ? 'Режим администратора включён' : 'Режим администратора отключён');
-              }}
-            />
+            <Switch checked={state.isAdmin} onCheckedChange={v => { updateState(() => ({ isAdmin: v })); toast.success(v ? 'Режим администратора включён' : 'Режим администратора отключён'); }} />
             <Label className="text-sm">Режим администратора</Label>
           </div>
-          <p className="text-xs text-muted-foreground mt-2">Открывает расширенные настройки и управление лидербордом</p>
         </div>
 
         {/* Reset */}
         <div className="widget-card">
           <h2 className="font-display font-semibold text-foreground mb-4">Данные</h2>
-          <Button
-            variant="destructive"
-            onClick={() => {
-              if (confirm('Сбросить все данные?')) {
-                localStorage.removeItem('sales_app_state');
-                window.location.reload();
-              }
-            }}
-          >
+          <Button variant="destructive" onClick={() => { if (confirm('Сбросить все данные?')) { localStorage.removeItem('sales_app_state'); window.location.reload(); } }}>
             Сбросить данные
           </Button>
         </div>

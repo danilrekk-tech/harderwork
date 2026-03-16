@@ -7,7 +7,20 @@ export default function LeaderboardPage() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-6">📊 Лидерборд</h1>
+      <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-2">📊 Лидерборд</h1>
+
+      {/* Season */}
+      <div className="widget-card mb-6 flex items-center justify-between">
+        <div>
+          <span className="text-sm font-semibold text-foreground">🏆 Season {state.season.number}</span>
+          <p className="text-xs text-muted-foreground">
+            {new Date(state.season.startDate).toLocaleDateString('ru-RU')} — {new Date(state.season.endDate).toLocaleDateString('ru-RU')}
+          </p>
+        </div>
+        {state.season.isActive && (
+          <span className="text-xs font-medium text-primary px-2 py-1 rounded-full bg-primary/10">Активный</span>
+        )}
+      </div>
 
       <div className="space-y-3">
         {state.leaderboard.map((entry, i) => (
@@ -23,7 +36,7 @@ export default function LeaderboardPage() {
             </div>
             <div className="flex-1 min-w-0">
               <div className="font-semibold text-foreground">{entry.name}</div>
-              <div className="text-sm text-muted-foreground">{entry.invoicesPaid} оплат</div>
+              <div className="text-sm text-muted-foreground">{entry.invoicesPaid} оплат • {(entry.xp || 0).toLocaleString()} XP</div>
             </div>
             <div className="text-right">
               <div className="font-display font-bold text-foreground">{entry.revenue.toLocaleString()} ₽</div>
