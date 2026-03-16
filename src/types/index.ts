@@ -27,8 +27,8 @@ export interface Reminder {
   id: string;
   clientId: string;
   clientTimezone: string;
-  clientTime: string; // ISO datetime in client's timezone
-  myTime: string; // ISO datetime in my timezone
+  clientTime: string;
+  myTime: string;
   reason: string;
   amount?: number;
   completed: boolean;
@@ -42,12 +42,21 @@ export interface Achievement {
   icon: string;
   xpReward: number;
   condition: AchievementCondition;
+  collectionId?: string;
   unlockedAt?: string;
 }
 
 export interface AchievementCondition {
-  type: 'invoices_issued' | 'invoices_paid' | 'clients_processed' | 'streak_days' | 'total_revenue' | 'xp_earned';
+  type: 'invoices_issued' | 'invoices_paid' | 'clients_processed' | 'streak_days' | 'total_revenue' | 'xp_earned' | 'combo_max' | 'plan_completed' | 'plan_overfulfilled' | 'level_reached';
   target: number;
+}
+
+export interface AchievementCollection {
+  id: string;
+  name: string;
+  icon: string;
+  achievementIds: string[];
+  bonusXp: number;
 }
 
 export interface BoostItem {
@@ -59,14 +68,83 @@ export interface BoostItem {
   effect: string;
 }
 
+export interface SkillTree {
+  closing: number;
+  processing: number;
+  planning: number;
+  availablePoints: number;
+}
+
+export interface ActionEvent {
+  id: string;
+  type: 'client_added' | 'invoice_issued' | 'invoice_paid' | 'plan_completed' | 'achievement_unlocked' | 'level_up' | 'focus_completed' | 'record_broken' | 'combo';
+  description: string;
+  xpEarned: number;
+  timestamp: string;
+  managerName?: string;
+}
+
+export interface MomentumState {
+  value: number;
+  lastActionAt?: string;
+  bonusActiveUntil?: string;
+}
+
+export interface ComboState {
+  count: number;
+  maxCombo: number;
+  lastActionAt?: string;
+}
+
+export interface PersonalRecords {
+  maxInvoicesPerDay: { value: number; date?: string };
+  maxPaymentsPerDay: { value: number; date?: string };
+  maxClientsPerDay: { value: number; date?: string };
+  maxRevenuePerDay: { value: number; date?: string };
+}
+
+export interface DailyTask {
+  id: string;
+  type: 'clients' | 'invoices' | 'payments';
+  title: string;
+  target: number;
+  current: number;
+  xpReward: number;
+  completed: boolean;
+  date: string;
+}
+
+export interface MultiLevelPlan {
+  invoices: { min: number; norm: number; challenge: number };
+  payments: { min: number; norm: number; challenge: number };
+}
+
+export interface Season {
+  id: string;
+  number: number;
+  startDate: string;
+  endDate: string;
+  isActive: boolean;
+}
+
+export interface FocusSession {
+  isActive: boolean;
+  startedAt?: string;
+  durationMinutes: number;
+  actionsCount: number;
+  bonusXpPercent: number;
+}
+
 export interface ManagerProfile {
   name: string;
   level: number;
   xp: number;
   xpToNextLevel: number;
   totalXpEarned: number;
+  xpSpent: number;
   streakDays: number;
   lastActiveDate: string;
+  processedClientsCount: number;
 }
 
 export interface PlanSettings {
@@ -76,9 +154,9 @@ export interface PlanSettings {
 }
 
 export interface WorkSchedule {
-  workDays: number[]; // 0=Sun, 1=Mon, ...
-  startTime: string; // "09:00"
-  endTime: string; // "18:00"
+  workDays: number[];
+  startTime: string;
+  endTime: string;
   timezone: string;
 }
 
@@ -98,7 +176,16 @@ export type WidgetType =
   | 'shift_timer'
   | 'leaderboard'
   | 'motivation'
-  | 'xp_progress';
+  | 'xp_progress'
+  | 'daily_tasks'
+  | 'sales_feed'
+  | 'activity_heatmap'
+  | 'focus_session'
+  | 'near_achievements'
+  | 'unpaid_invoices'
+  | 'personal_records'
+  | 'skills'
+  | 'sales_momentum';
 
 export interface LeaderboardEntry {
   id: string;
@@ -107,6 +194,7 @@ export interface LeaderboardEntry {
   revenue: number;
   invoicesPaid: number;
   level: number;
+  xp?: number;
 }
 
 export interface Manager {
@@ -118,6 +206,10 @@ export interface Manager {
   xp: number;
   revenue: number;
   invoicesPaid: number;
+  invoicesIssued: number;
+  clientsProcessed: number;
+  streakDays: number;
+  disciplineIndex: number;
   isBlocked: boolean;
   createdAt: string;
 }
@@ -130,6 +222,7 @@ export interface Contest {
   startDate: string;
   endDate: string;
   prize: string;
+  prizeXp: number;
   metric: 'revenue' | 'invoices' | 'clients';
   target: number;
   teams?: ContestTeam[];
@@ -163,7 +256,18 @@ export interface AppState {
   reminders: Reminder[];
   achievements: Achievement[];
   unlockedAchievements: string[];
+  collections: AchievementCollection[];
+  completedCollections: string[];
   boostInventory: string[];
+  skills: SkillTree;
+  eventLog: ActionEvent[];
+  momentum: MomentumState;
+  combo: ComboState;
+  personalRecords: PersonalRecords;
+  dailyTasks: DailyTask[];
+  focusSession: FocusSession;
+  multiLevelPlan: MultiLevelPlan;
+  season: Season;
   planSettings: PlanSettings;
   workSchedule: WorkSchedule;
   dashboardWidgets: WidgetConfig[];
@@ -174,4 +278,5 @@ export interface AppState {
   bonusActivities: BonusActivity[];
   customAchievements: Achievement[];
   customBoosts: BoostItem[];
+  planCompletedThisMonth: boolean;
 }
