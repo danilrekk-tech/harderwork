@@ -17,6 +17,10 @@ const CONDITION_LABELS: Record<AchievementCondition['type'], string> = {
   streak_days: 'Дней подряд',
   total_revenue: 'Общая выручка',
   xp_earned: 'Заработано XP',
+  combo_max: 'Макс. комбо',
+  level_reached: 'Достигнут уровень',
+  plan_completed: 'План выполнен',
+  plan_overfulfilled: 'Перевыполнение плана %',
 };
 
 export default function AdminAchievementsTab() {

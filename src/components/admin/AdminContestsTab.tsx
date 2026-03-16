@@ -44,7 +44,7 @@ export default function AdminContestsTab() {
       toast.success('Конкурс обновлён');
     } else {
       const contest: Contest = {
-        id: crypto.randomUUID(), ...form, teams: form.type === 'team' ? [] : undefined, isActive: true,
+        id: crypto.randomUUID(), ...form, prizeXp: 500, teams: form.type === 'team' ? [] : undefined, isActive: true,
       };
       updateState(prev => ({ contests: [...prev.contests, contest] }));
       toast.success('Конкурс создан');
