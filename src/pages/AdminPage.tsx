@@ -1,4 +1,4 @@
-import { useApp } from '@/context/AppContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Navigate } from 'react-router-dom';
 import AdminManagersTab from '@/components/admin/AdminManagersTab';
@@ -10,8 +10,8 @@ import AdminStatsTab from '@/components/admin/AdminStatsTab';
 import AdminAnalyticsTab from '@/components/admin/AdminAnalyticsTab';
 
 export default function AdminPage() {
-  const { state } = useApp();
-  if (!state.isAdmin) return <Navigate to="/" replace />;
+  const { role } = useAuth();
+  if (role !== 'leader') return <Navigate to="/" replace />;
 
   return (
     <div className="max-w-6xl mx-auto">
