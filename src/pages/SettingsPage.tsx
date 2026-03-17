@@ -1,15 +1,70 @@
 import { useApp } from '@/context/AppContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { Copy, Link, Trash2 } from 'lucide-react';
 
 const DAY_LABELS = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
 
+interface Invite {
+  id: string;
+  code: string;
+  expires_at: string;
+  used_by: string | null;
+  created_at: string;
+}
+
 export default function SettingsPage() {
   const { state, updateState } = useApp();
+  const { role, user, profileName } = useAuth();
+  const [invites, setInvites] = useState<Invite[]>([]);
+  const [loadingInvite, setLoadingInvite] = useState(false);
+
+  useEffect(() => {
+    if (role === 'leader') loadInvites();
+  }, [role]);
+
+  async function loadInvites() {
+    const { data } = await supabase
+      .from('invites')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (data) setInvites(data as unknown as Invite[]);
+  }
+
+  async function createInvite() {
+    if (!user) return;
+    setLoadingInvite(true);
+    const code = crypto.randomUUID().replace(/-/g, '').slice(0, 12);
+    const { error } = await supabase.from('invites').insert({
+      code,
+      created_by: user.id,
+      expires_at: new Date(Date.now() + 7 * 86400000).toISOString(),
+    });
+    if (error) toast.error('Ошибка создания приглашения');
+    else {
+      toast.success('Приглашение создано');
+      loadInvites();
+    }
+    setLoadingInvite(false);
+  }
+
+  function copyInviteLink(code: string) {
+    const url = `${window.location.origin}/invite?code=${code}`;
+    navigator.clipboard.writeText(url);
+    toast.success('Ссылка скопирована');
+  }
+
+  async function deleteInvite(id: string) {
+    await supabase.from('invites').delete().eq('id', id);
+    loadInvites();
+    toast.success('Приглашение удалено');
+  }
 
   function toggleWorkDay(day: number) {
     const days = state.workSchedule.workDays.includes(day)
@@ -29,10 +84,53 @@ export default function SettingsPage() {
           <div className="space-y-3">
             <div>
               <Label className="text-sm text-muted-foreground">Имя</Label>
-              <Input value={state.profile.name} onChange={e => updateState(() => ({ profile: { ...state.profile, name: e.target.value } }))} />
+              <Input value={profileName || state.profile.name} disabled className="bg-muted" />
+              <p className="text-xs text-muted-foreground mt-1">Имя задаётся при регистрации</p>
+            </div>
+            <div>
+              <Label className="text-sm text-muted-foreground">Роль</Label>
+              <div className="text-sm font-medium text-foreground mt-1">
+                {role === 'leader' ? '🛡️ Руководитель отдела' : '📊 Менеджер по продажам'}
+              </div>
             </div>
           </div>
         </div>
+
+        {/* Invite Management (Leader only) */}
+        {role === 'leader' && (
+          <div className="widget-card">
+            <h2 className="font-display font-semibold text-foreground mb-4">📨 Приглашения менеджеров</h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              Создайте инвайт-ссылку для регистрации нового менеджера. Ссылка действует 7 дней.
+            </p>
+            <Button onClick={createInvite} disabled={loadingInvite} size="sm" className="mb-4">
+              <Link className="w-4 h-4 mr-1" /> Создать приглашение
+            </Button>
+            {invites.length > 0 && (
+              <div className="space-y-2">
+                {invites.map(inv => (
+                  <div key={inv.id} className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 text-sm">
+                    <code className="flex-1 text-xs truncate">{inv.code}</code>
+                    {inv.used_by ? (
+                      <span className="text-xs text-muted-foreground">Использовано</span>
+                    ) : new Date(inv.expires_at) < new Date() ? (
+                      <span className="text-xs text-destructive">Истекло</span>
+                    ) : (
+                      <>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => copyInviteLink(inv.code)}>
+                          <Copy className="w-3 h-3" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => deleteInvite(inv.id)}>
+                          <Trash2 className="w-3 h-3 text-destructive" />
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Plan Settings */}
         <div className="widget-card">
@@ -121,23 +219,6 @@ export default function SettingsPage() {
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Admin Mode */}
-        <div className="widget-card">
-          <h2 className="font-display font-semibold text-foreground mb-4">Администратор</h2>
-          <div className="flex items-center gap-3">
-            <Switch checked={state.isAdmin} onCheckedChange={v => { updateState(() => ({ isAdmin: v })); toast.success(v ? 'Режим администратора включён' : 'Режим администратора отключён'); }} />
-            <Label className="text-sm">Режим администратора</Label>
-          </div>
-        </div>
-
-        {/* Reset */}
-        <div className="widget-card">
-          <h2 className="font-display font-semibold text-foreground mb-4">Данные</h2>
-          <Button variant="destructive" onClick={() => { if (confirm('Сбросить все данные?')) { localStorage.removeItem('sales_app_state'); window.location.reload(); } }}>
-            Сбросить данные
-          </Button>
         </div>
       </div>
     </div>

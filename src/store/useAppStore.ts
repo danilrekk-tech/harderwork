@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import type { AppState, Client, Invoice, Reminder, WidgetConfig, DealStatus, ActionEvent, DailyTask } from '@/types';
 import { ACHIEVEMENTS_DATA, COLLECTIONS, BOOST_ITEMS, DEFAULT_WIDGETS, DEFAULT_LEADERBOARD } from './gameData';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 function calcLevel(totalXp: number) {
   let level = 1, xpNeeded = 200, remaining = totalXp;
@@ -14,12 +15,6 @@ function calcLevel(totalXp: number) {
 }
 
 function todayStr() { return new Date().toISOString().split('T')[0]; }
-
-function currentMonthInvoices(invoices: Invoice[]) {
-  const now = new Date();
-  const m = now.getMonth(), y = now.getFullYear();
-  return invoices.filter(i => { const d = new Date(i.issuedAt); return d.getMonth() === m && d.getFullYear() === y; });
-}
 
 function generateDailyTasksForDate(date: string): DailyTask[] {
   return [
@@ -64,13 +59,13 @@ const INITIAL_STATE: AppState = {
   planCompletedThisMonth: false,
 };
 
-function loadState(): AppState {
+function loadState(userId?: string): AppState {
   try {
-    const saved = localStorage.getItem('sales_app_state');
+    const key = userId ? `sales_app_state_${userId}` : 'sales_app_state';
+    const saved = localStorage.getItem(key);
     if (saved) {
       const parsed = JSON.parse(saved);
       const state = { ...INITIAL_STATE, ...parsed, achievements: ACHIEVEMENTS_DATA, collections: COLLECTIONS };
-      // Ensure daily tasks are fresh
       const today = todayStr();
       if (!state.dailyTasks?.length || state.dailyTasks[0]?.date !== today) {
         state.dailyTasks = generateDailyTasksForDate(today);
@@ -81,23 +76,22 @@ function loadState(): AppState {
   return INITIAL_STATE;
 }
 
-function saveState(state: AppState) {
-  localStorage.setItem('sales_app_state', JSON.stringify(state));
+function saveState(state: AppState, userId?: string) {
+  const key = userId ? `sales_app_state_${userId}` : 'sales_app_state';
+  localStorage.setItem(key, JSON.stringify(state));
 }
 
-// Core action processor - handles XP, combo, momentum, events, daily tasks, streaks
+// Core action processor
 function performAction(prev: AppState, actionType: ActionEvent['type'], xpBase: number, description: string): AppState {
   const now = new Date().toISOString();
   const today = todayStr();
 
-  // Combo
   const comboWindow = 30000;
   const timeSinceLast = prev.combo.lastActionAt ? Date.now() - new Date(prev.combo.lastActionAt).getTime() : Infinity;
   const newCombo = timeSinceLast < comboWindow ? prev.combo.count + 1 : 1;
   const comboMult = 1 + Math.min(newCombo - 1, 10) * 0.1;
   const maxCombo = Math.max(prev.combo.maxCombo, newCombo);
 
-  // Momentum
   const decayRate = 2;
   const timeSinceMomentum = prev.momentum.lastActionAt ? (Date.now() - new Date(prev.momentum.lastActionAt).getTime()) / 60000 : 0;
   const decayed = Math.max(0, prev.momentum.value - timeSinceMomentum * decayRate);
@@ -110,13 +104,11 @@ function performAction(prev: AppState, actionType: ActionEvent['type'], xpBase: 
     toast('🔥 Sales Momentum MAX! XP x1.5 на 3 минуты!');
   }
 
-  // Skill bonus
   let skillMult = 1;
   if (actionType === 'client_added') skillMult = 1 + prev.skills.processing * 0.05;
   if (actionType === 'invoice_issued') skillMult = 1 + prev.skills.planning * 0.05;
   if (actionType === 'invoice_paid') skillMult = 1 + prev.skills.closing * 0.05;
 
-  // Focus bonus
   const focusMult = prev.focusSession.isActive ? 1 + prev.focusSession.bonusXpPercent / 100 : 1;
 
   const totalXp = Math.round(xpBase * comboMult * momentumMult * skillMult * focusMult);
@@ -125,20 +117,13 @@ function performAction(prev: AppState, actionType: ActionEvent['type'], xpBase: 
   const oldLevel = prev.profile.level;
   const skillPointsGained = Math.max(0, level - oldLevel);
 
-  // Combo toast
   if (newCombo >= 3) toast(`⚡ Комбо x${newCombo}! +${Math.round((comboMult - 1) * 100)}% XP`);
-
-  // XP toast
   const bonusInfo = totalXp > xpBase ? ` (x${(totalXp / xpBase).toFixed(1)})` : '';
   toast(`+${totalXp} XP${bonusInfo}`);
-
-  // Level up
   if (level > oldLevel) toast.success(`🎉 Уровень ${level}! +${skillPointsGained} очков навыков`);
 
-  // Event
   const event: ActionEvent = { id: crypto.randomUUID(), type: actionType, description, xpEarned: totalXp, timestamp: now, managerName: prev.profile.name };
 
-  // Streak
   const lastActive = prev.profile.lastActiveDate;
   let streakDays = prev.profile.streakDays;
   if (lastActive !== today) {
@@ -146,7 +131,6 @@ function performAction(prev: AppState, actionType: ActionEvent['type'], xpBase: 
     streakDays = lastActive === yesterday ? streakDays + 1 : 1;
   }
 
-  // Daily tasks
   const dailyTasks = prev.dailyTasks.map(task => {
     if (task.date !== today || task.completed) return task;
     const match = (task.type === 'clients' && actionType === 'client_added')
@@ -159,7 +143,6 @@ function performAction(prev: AppState, actionType: ActionEvent['type'], xpBase: 
     return { ...task, current: newCurrent, completed };
   });
 
-  // Add daily task XP
   const dailyTaskXp = dailyTasks.filter(t => t.completed && !prev.dailyTasks.find(pt => pt.id === t.id)?.completed).reduce((s, t) => s + t.xpReward, 0);
   const finalTotalXp = newTotalXp + dailyTaskXp;
   const finalLevel = calcLevel(finalTotalXp - prev.profile.xpSpent);
@@ -181,18 +164,15 @@ function performAction(prev: AppState, actionType: ActionEvent['type'], xpBase: 
 }
 
 function checkAllAchievements(state: AppState): AppState {
-  const monthInvs = currentMonthInvoices(state.invoices);
   const issuedCount = state.invoices.length;
   const paidCount = state.invoices.filter(i => i.status === 'paid').length;
   const clientCount = state.profile.processedClientsCount;
   const totalRevenue = state.invoices.filter(i => i.status === 'paid').reduce((s, i) => s + i.amount, 0);
 
-  // Plan completion %
   const planProgress = state.planSettings.type === 'amount'
     ? (totalRevenue / state.planSettings.target) * 100
     : (issuedCount / state.planSettings.target) * 100;
   const planCompleted = planProgress >= 100;
-  const planOverfulfilled = planProgress;
 
   const newUnlocks: string[] = [];
   for (const ach of state.achievements) {
@@ -207,7 +187,7 @@ function checkAllAchievements(state: AppState): AppState {
       case 'xp_earned': met = state.profile.totalXpEarned >= ach.condition.target; break;
       case 'combo_max': met = state.combo.maxCombo >= ach.condition.target; break;
       case 'plan_completed': met = planCompleted; break;
-      case 'plan_overfulfilled': met = planOverfulfilled >= ach.condition.target; break;
+      case 'plan_overfulfilled': met = planProgress >= ach.condition.target; break;
       case 'level_reached': met = state.profile.level >= ach.condition.target; break;
     }
     if (met) newUnlocks.push(ach.id);
@@ -224,7 +204,6 @@ function checkAllAchievements(state: AppState): AppState {
     if (ach) toast.success(`🏆 ${ach.title} — +${ach.xpReward} XP`);
   });
 
-  // Check collections
   const allUnlocked = [...state.unlockedAchievements, ...newUnlocks];
   const newCompletedCollections: string[] = [];
   let collectionXp = 0;
@@ -262,32 +241,59 @@ function checkRecords(state: AppState): AppState {
   const records = { ...state.personalRecords };
   let broken = false;
 
-  if (todayInvoices > records.maxInvoicesPerDay.value) {
-    records.maxInvoicesPerDay = { value: todayInvoices, date: today };
-    broken = true;
-  }
-  if (todayPayments > records.maxPaymentsPerDay.value) {
-    records.maxPaymentsPerDay = { value: todayPayments, date: today };
-    broken = true;
-  }
-  if (todayClients > records.maxClientsPerDay.value) {
-    records.maxClientsPerDay = { value: todayClients, date: today };
-    broken = true;
-  }
-  if (todayRevenue > records.maxRevenuePerDay.value) {
-    records.maxRevenuePerDay = { value: todayRevenue, date: today };
-    broken = true;
-  }
+  if (todayInvoices > records.maxInvoicesPerDay.value) { records.maxInvoicesPerDay = { value: todayInvoices, date: today }; broken = true; }
+  if (todayPayments > records.maxPaymentsPerDay.value) { records.maxPaymentsPerDay = { value: todayPayments, date: today }; broken = true; }
+  if (todayClients > records.maxClientsPerDay.value) { records.maxClientsPerDay = { value: todayClients, date: today }; broken = true; }
+  if (todayRevenue > records.maxRevenuePerDay.value) { records.maxRevenuePerDay = { value: todayRevenue, date: today }; broken = true; }
 
   if (broken) toast('🏅 Новый личный рекорд!');
   return { ...state, personalRecords: records };
 }
 
-export function useAppStore() {
-  const [state, setState] = useState<AppState>(loadState);
-  useEffect(() => { saveState(state); }, [state]);
+// Sync key profile data to Supabase
+async function syncProfileToDb(userId: string, state: AppState) {
+  try {
+    await supabase.from('profiles').update({
+      level: state.profile.level,
+      xp: state.profile.xp,
+      xp_to_next_level: state.profile.xpToNextLevel,
+      total_xp_earned: state.profile.totalXpEarned,
+      xp_spent: state.profile.xpSpent,
+      streak_days: state.profile.streakDays,
+      last_active_date: state.profile.lastActiveDate,
+      processed_clients_count: state.profile.processedClientsCount,
+    }).eq('user_id', userId);
+  } catch { /* silent */ }
+}
 
-  // Refresh daily tasks on day change
+export function useAppStore(userId?: string, role?: string | null, profileName?: string) {
+  const [state, setState] = useState<AppState>(() => {
+    const loaded = loadState(userId);
+    return {
+      ...loaded,
+      isAdmin: role === 'leader',
+      profile: { ...loaded.profile, name: profileName || loaded.profile.name },
+    };
+  });
+
+  // Update isAdmin when role changes
+  useEffect(() => {
+    setState(prev => ({
+      ...prev,
+      isAdmin: role === 'leader',
+      profile: { ...prev.profile, name: profileName || prev.profile.name },
+    }));
+  }, [role, profileName]);
+
+  useEffect(() => { saveState(state, userId); }, [state, userId]);
+
+  // Sync profile to DB periodically (debounced)
+  useEffect(() => {
+    if (!userId) return;
+    const timer = setTimeout(() => syncProfileToDb(userId, state), 2000);
+    return () => clearTimeout(timer);
+  }, [userId, state.profile.level, state.profile.totalXpEarned, state.profile.streakDays, state.profile.processedClientsCount]);
+
   useEffect(() => {
     const today = todayStr();
     if (!state.dailyTasks.length || state.dailyTasks[0]?.date !== today) {
@@ -437,9 +443,7 @@ export function useAppStore() {
     setState(prev => {
       if (!prev.focusSession.isActive) return prev;
       const bonus = prev.focusSession.actionsCount * 10;
-      if (bonus > 0) {
-        toast.success(`🎯 Фокус-сессия завершена! ${prev.focusSession.actionsCount} действий, +${bonus} бонус XP`);
-      }
+      if (bonus > 0) toast.success(`🎯 Фокус-сессия завершена! ${prev.focusSession.actionsCount} действий, +${bonus} бонус XP`);
       const newTotal = prev.profile.totalXpEarned + bonus;
       const lvl = calcLevel(newTotal - prev.profile.xpSpent);
       const event: ActionEvent = { id: crypto.randomUUID(), type: 'focus_completed', description: `Фокус-сессия: ${prev.focusSession.actionsCount} действий`, xpEarned: bonus, timestamp: new Date().toISOString(), managerName: prev.profile.name };

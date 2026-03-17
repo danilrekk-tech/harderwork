@@ -1,12 +1,14 @@
 import React, { createContext, useContext } from 'react';
 import { useAppStore } from '@/store/useAppStore';
+import { useAuth } from '@/contexts/AuthContext';
 
 type AppStoreReturn = ReturnType<typeof useAppStore>;
 
 const AppContext = createContext<AppStoreReturn | null>(null);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const store = useAppStore();
+  const { user, role, profileName } = useAuth();
+  const store = useAppStore(user?.id, role, profileName);
   return <AppContext.Provider value={store}>{children}</AppContext.Provider>;
 }
 
