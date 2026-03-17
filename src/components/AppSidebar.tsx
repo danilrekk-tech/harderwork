@@ -1,8 +1,10 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { LayoutDashboard, FileText, Users, Calendar, Trophy, BarChart3, ShoppingBag, Settings, Menu, X, Shield } from 'lucide-react';
+import { LayoutDashboard, FileText, Users, Calendar, Trophy, BarChart3, ShoppingBag, Settings, Menu, X, Shield, BookOpen, LogOut } from 'lucide-react';
 import { useState } from 'react';
 import { useApp } from '@/context/AppContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Button } from '@/components/ui/button';
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
@@ -12,13 +14,14 @@ const navItems = [
   { to: '/achievements', icon: Trophy, label: 'Достижения' },
   { to: '/leaderboard', icon: BarChart3, label: 'Лидерборд' },
   { to: '/shop', icon: ShoppingBag, label: 'Магазин' },
+  { to: '/knowledge', icon: BookOpen, label: 'База знаний' },
   { to: '/settings', icon: Settings, label: 'Настройки' },
 ];
 
 export default function AppSidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { state } = useApp();
-  const location = useLocation();
+  const { role, signOut, profileName } = useAuth();
 
   const xpPercent = state.profile.xpToNextLevel > 0
     ? Math.min(100, (state.profile.xp / state.profile.xpToNextLevel) * 100)
@@ -28,10 +31,13 @@ export default function AppSidebar() {
     <div className="flex flex-col h-full bg-sidebar border-r border-sidebar-border">
       <div className="p-5 border-b border-sidebar-border">
         <h1 className="font-display text-xl font-bold text-foreground">SalesForce</h1>
-        <p className="text-xs text-muted-foreground mt-0.5">Менеджер продаж</p>
+        <p className="text-xs text-muted-foreground mt-0.5">
+          {role === 'leader' ? '🛡️ Руководитель' : '📊 Менеджер продаж'}
+        </p>
       </div>
 
       <div className="p-4 border-b border-sidebar-border">
+        <div className="text-sm font-medium text-foreground mb-1 truncate">{profileName || state.profile.name}</div>
         <div className="flex items-center gap-3">
           <div className="level-badge text-xs">Ур. {state.profile.level}</div>
           <div className="flex-1">
@@ -56,7 +62,7 @@ export default function AppSidebar() {
             <span>{item.label}</span>
           </NavLink>
         ))}
-        {state.isAdmin && (
+        {role === 'leader' && (
           <NavLink
             to="/admin"
             onClick={() => setMobileOpen(false)}
@@ -68,22 +74,23 @@ export default function AppSidebar() {
         )}
       </nav>
 
-      <div className="p-4 border-t border-sidebar-border">
+      <div className="p-4 border-t border-sidebar-border space-y-2">
         <div className="text-xs text-muted-foreground">
           🔥 Серия: {state.profile.streakDays} дн.
         </div>
+        <Button variant="ghost" size="sm" className="w-full justify-start text-muted-foreground" onClick={signOut}>
+          <LogOut className="w-4 h-4 mr-2" /> Выйти
+        </Button>
       </div>
     </div>
   );
 
   return (
     <>
-      {/* Desktop sidebar */}
       <aside className="hidden md:flex w-64 h-screen sticky top-0 flex-shrink-0">
         {sidebar}
       </aside>
 
-      {/* Mobile hamburger */}
       <button
         onClick={() => setMobileOpen(true)}
         className="md:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-card border border-border shadow-md"
@@ -91,28 +98,20 @@ export default function AppSidebar() {
         <Menu className="w-5 h-5" />
       </button>
 
-      {/* Mobile drawer */}
       <AnimatePresence>
         {mobileOpen && (
           <>
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               className="md:hidden fixed inset-0 bg-foreground/20 backdrop-blur-sm z-50"
               onClick={() => setMobileOpen(false)}
             />
             <motion.aside
-              initial={{ x: -280 }}
-              animate={{ x: 0 }}
-              exit={{ x: -280 }}
+              initial={{ x: -280 }} animate={{ x: 0 }} exit={{ x: -280 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
               className="md:hidden fixed left-0 top-0 bottom-0 w-72 z-50 shadow-xl"
             >
-              <button
-                onClick={() => setMobileOpen(false)}
-                className="absolute top-4 right-4 p-1"
-              >
+              <button onClick={() => setMobileOpen(false)} className="absolute top-4 right-4 p-1">
                 <X className="w-5 h-5" />
               </button>
               {sidebar}
