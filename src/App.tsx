@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { AppProvider } from "@/context/AppContext";
 import AppLayout from "@/components/AppLayout";
 import DashboardPage from "@/pages/DashboardPage";
+import LeaderDashboardPage from "@/pages/LeaderDashboardPage";
 import InvoicesPage from "@/pages/InvoicesPage";
 import ClientsPage from "@/pages/ClientsPage";
 import CalendarPage from "@/pages/CalendarPage";
@@ -13,7 +14,12 @@ import AchievementsPage from "@/pages/AchievementsPage";
 import LeaderboardPage from "@/pages/LeaderboardPage";
 import ShopPage from "@/pages/ShopPage";
 import SettingsPage from "@/pages/SettingsPage";
-import AdminPage from "@/pages/AdminPage";
+import ManagersPage from "@/pages/ManagersPage";
+import AnalyticsPage from "@/pages/AnalyticsPage";
+import ContestsPage from "@/pages/ContestsPage";
+import ActivitiesPage from "@/pages/ActivitiesPage";
+import ManageAchievementsPage from "@/pages/ManageAchievementsPage";
+import ManageBoostsPage from "@/pages/ManageBoostsPage";
 import AuthPage from "@/pages/AuthPage";
 import InviteSignupPage from "@/pages/InviteSignupPage";
 import KnowledgeBasePage from "@/pages/KnowledgeBasePage";
@@ -34,11 +40,22 @@ function LeaderRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function ManagerRoute({ children }: { children: React.ReactNode }) {
+  const { role } = useAuth();
+  if (role === 'leader') return <Navigate to="/" replace />;
+  return <>{children}</>;
+}
+
 function AuthRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   if (loading) return null;
   if (user) return <Navigate to="/" replace />;
   return <>{children}</>;
+}
+
+function RoleDashboard() {
+  const { role } = useAuth();
+  return role === 'leader' ? <LeaderDashboardPage /> : <DashboardPage />;
 }
 
 function AppRoutes() {
@@ -47,16 +64,24 @@ function AppRoutes() {
       <Route path="/auth" element={<AuthRoute><AuthPage /></AuthRoute>} />
       <Route path="/invite" element={<InviteSignupPage />} />
       <Route element={<ProtectedRoute><AppProvider><AppLayout /></AppProvider></ProtectedRoute>}>
-        <Route path="/" element={<DashboardPage />} />
-        <Route path="/invoices" element={<InvoicesPage />} />
-        <Route path="/clients" element={<ClientsPage />} />
-        <Route path="/calendar" element={<CalendarPage />} />
-        <Route path="/achievements" element={<AchievementsPage />} />
-        <Route path="/leaderboard" element={<LeaderboardPage />} />
-        <Route path="/shop" element={<ShopPage />} />
+        <Route path="/" element={<RoleDashboard />} />
+        {/* Manager-only routes */}
+        <Route path="/invoices" element={<ManagerRoute><InvoicesPage /></ManagerRoute>} />
+        <Route path="/clients" element={<ManagerRoute><ClientsPage /></ManagerRoute>} />
+        <Route path="/calendar" element={<ManagerRoute><CalendarPage /></ManagerRoute>} />
+        <Route path="/achievements" element={<ManagerRoute><AchievementsPage /></ManagerRoute>} />
+        <Route path="/leaderboard" element={<ManagerRoute><LeaderboardPage /></ManagerRoute>} />
+        <Route path="/shop" element={<ManagerRoute><ShopPage /></ManagerRoute>} />
+        {/* Leader-only routes */}
+        <Route path="/managers" element={<LeaderRoute><ManagersPage /></LeaderRoute>} />
+        <Route path="/analytics" element={<LeaderRoute><AnalyticsPage /></LeaderRoute>} />
+        <Route path="/contests" element={<LeaderRoute><ContestsPage /></LeaderRoute>} />
+        <Route path="/activities" element={<LeaderRoute><ActivitiesPage /></LeaderRoute>} />
+        <Route path="/manage-achievements" element={<LeaderRoute><ManageAchievementsPage /></LeaderRoute>} />
+        <Route path="/manage-boosts" element={<LeaderRoute><ManageBoostsPage /></LeaderRoute>} />
+        {/* Shared routes */}
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/knowledge" element={<KnowledgeBasePage />} />
-        <Route path="/admin" element={<LeaderRoute><AdminPage /></LeaderRoute>} />
       </Route>
       <Route path="*" element={<NotFound />} />
     </Routes>

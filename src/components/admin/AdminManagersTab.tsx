@@ -1,149 +1,139 @@
-import { useApp } from '@/context/AppContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { toast } from 'sonner';
-import { useState } from 'react';
-import { Plus, Pencil, Trash2, Ban, CheckCircle } from 'lucide-react';
-import type { Manager } from '@/types';
+import { Card } from '@/components/ui/card';
+
+interface ManagerRow {
+  user_id: string;
+  name: string;
+  level: number;
+  xp: number;
+  total_xp_earned: number;
+  streak_days: number;
+  processed_clients_count: number;
+  last_active_date: string;
+}
 
 export default function AdminManagersTab() {
-  const { state, updateState } = useApp();
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editing, setEditing] = useState<Manager | null>(null);
-  const [form, setForm] = useState({ name: '', email: '', phone: '' });
+  const [managers, setManagers] = useState<ManagerRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<Record<string, { invoices: number; paid: number; revenue: number; clients: number }>>({});
 
-  function openCreate() {
-    setEditing(null);
-    setForm({ name: '', email: '', phone: '' });
-    setDialogOpen(true);
-  }
+  useEffect(() => {
+    loadManagers();
+  }, []);
 
-  function openEdit(m: Manager) {
-    setEditing(m);
-    setForm({ name: m.name, email: m.email, phone: m.phone });
-    setDialogOpen(true);
-  }
+  async function loadManagers() {
+    setLoading(true);
+    // Get all users with manager role
+    const { data: roles } = await supabase
+      .from('user_roles')
+      .select('user_id')
+      .eq('role', 'manager' as any);
 
-  function save() {
-    if (!form.name.trim()) { toast.error('Укажите имя'); return; }
-    if (editing) {
-      updateState(prev => ({
-        managers: prev.managers.map(m => m.id === editing.id ? { ...m, ...form } : m),
-      }));
-      toast.success('Менеджер обновлён');
-    } else {
-      const newManager: Manager = {
-        id: crypto.randomUUID(),
-        ...form,
-        level: 1,
-        xp: 0,
-        revenue: 0,
-        invoicesPaid: 0,
-        invoicesIssued: 0,
-        clientsProcessed: 0,
-        streakDays: 0,
-        disciplineIndex: 0,
-        isBlocked: false,
-        createdAt: new Date().toISOString(),
-      };
-      updateState(prev => ({ managers: [...prev.managers, newManager] }));
-      toast.success('Менеджер добавлен');
+    if (!roles?.length) {
+      setManagers([]);
+      setLoading(false);
+      return;
     }
-    setDialogOpen(false);
+
+    const managerIds = roles.map(r => r.user_id);
+
+    // Get profiles
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('*')
+      .in('user_id', managerIds);
+
+    if (profiles) {
+      setManagers(profiles as unknown as ManagerRow[]);
+    }
+
+    // Get invoice stats per manager
+    const { data: invoices } = await supabase
+      .from('invoices')
+      .select('user_id, amount, status')
+      .in('user_id', managerIds);
+
+    // Get client counts per manager
+    const { data: clients } = await supabase
+      .from('clients')
+      .select('user_id')
+      .in('user_id', managerIds);
+
+    const statsMap: Record<string, { invoices: number; paid: number; revenue: number; clients: number }> = {};
+    managerIds.forEach(id => {
+      statsMap[id] = { invoices: 0, paid: 0, revenue: 0, clients: 0 };
+    });
+
+    invoices?.forEach(inv => {
+      if (!statsMap[inv.user_id]) statsMap[inv.user_id] = { invoices: 0, paid: 0, revenue: 0, clients: 0 };
+      statsMap[inv.user_id].invoices++;
+      if (inv.status === 'paid') {
+        statsMap[inv.user_id].paid++;
+        statsMap[inv.user_id].revenue += Number(inv.amount);
+      }
+    });
+
+    clients?.forEach(c => {
+      if (statsMap[c.user_id]) statsMap[c.user_id].clients++;
+    });
+
+    setStats(statsMap);
+    setLoading(false);
   }
 
-  function remove(id: string) {
-    if (!confirm('Удалить менеджера?')) return;
-    updateState(prev => ({ managers: prev.managers.filter(m => m.id !== id) }));
-    toast.success('Менеджер удалён');
-  }
-
-  function toggleBlock(id: string) {
-    updateState(prev => ({
-      managers: prev.managers.map(m => m.id === id ? { ...m, isBlocked: !m.isBlocked } : m),
-    }));
-    const m = state.managers.find(m => m.id === id);
-    toast.success(m?.isBlocked ? 'Менеджер разблокирован' : 'Менеджер заблокирован');
+  if (loading) {
+    return <div className="text-center py-8 text-muted-foreground">Загрузка менеджеров...</div>;
   }
 
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="font-display font-semibold text-lg text-foreground">Менеджеры ({state.managers.length})</h2>
-        <Button size="sm" onClick={openCreate}><Plus className="w-4 h-4 mr-1" /> Добавить</Button>
+        <h2 className="font-display font-semibold text-lg text-foreground">Менеджеры ({managers.length})</h2>
       </div>
 
-      {state.managers.length === 0 ? (
-        <div className="widget-card text-center py-8 text-muted-foreground">Нет менеджеров. Добавьте первого!</div>
+      {managers.length === 0 ? (
+        <Card className="text-center py-8 text-muted-foreground p-6">
+          <p className="text-lg mb-2">Нет зарегистрированных менеджеров</p>
+          <p className="text-sm">Создайте инвайт-ссылку в Настройках и отправьте менеджеру для регистрации.</p>
+        </Card>
       ) : (
         <div className="widget-card overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Имя</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Телефон</TableHead>
                 <TableHead>Уровень</TableHead>
+                <TableHead>XP</TableHead>
+                <TableHead>Клиенты</TableHead>
+                <TableHead>Счета</TableHead>
                 <TableHead>Выручка</TableHead>
-                <TableHead>Статус</TableHead>
-                <TableHead className="text-right">Действия</TableHead>
+                <TableHead>Серия</TableHead>
+                <TableHead>Активность</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {state.managers.map(m => (
-                <TableRow key={m.id} className={m.isBlocked ? 'opacity-50' : ''}>
-                  <TableCell className="font-medium">{m.name}</TableCell>
-                  <TableCell>{m.email}</TableCell>
-                  <TableCell>{m.phone}</TableCell>
-                  <TableCell><Badge variant="secondary">Ур. {m.level}</Badge></TableCell>
-                  <TableCell>{m.revenue.toLocaleString('ru-RU')} ₽</TableCell>
-                  <TableCell>
-                    {m.isBlocked ? (
-                      <Badge variant="destructive">Заблокирован</Badge>
-                    ) : (
-                      <Badge className="bg-primary/10 text-primary border-0">Активен</Badge>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-1 justify-end">
-                      <Button variant="ghost" size="icon" onClick={() => openEdit(m)}>
-                        <Pencil className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => toggleBlock(m.id)}>
-                        {m.isBlocked ? <CheckCircle className="w-4 h-4 text-primary" /> : <Ban className="w-4 h-4 text-destructive" />}
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => remove(m.id)}>
-                        <Trash2 className="w-4 h-4 text-destructive" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {managers.map(m => {
+                const s = stats[m.user_id] || { invoices: 0, paid: 0, revenue: 0, clients: 0 };
+                return (
+                  <TableRow key={m.user_id}>
+                    <TableCell className="font-medium">{m.name}</TableCell>
+                    <TableCell><Badge variant="secondary">Ур. {m.level}</Badge></TableCell>
+                    <TableCell className="text-accent font-medium">{m.total_xp_earned}</TableCell>
+                    <TableCell>{s.clients}</TableCell>
+                    <TableCell>{s.invoices} ({s.paid} оплач.)</TableCell>
+                    <TableCell className="font-medium">{s.revenue.toLocaleString('ru-RU')} ₽</TableCell>
+                    <TableCell>🔥 {m.streak_days} дн.</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{m.last_active_date || '—'}</TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </div>
       )}
-
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{editing ? 'Редактировать менеджера' : 'Новый менеджер'}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            <div><Label>Имя</Label><Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} /></div>
-            <div><Label>Email</Label><Input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} /></div>
-            <div><Label>Телефон</Label><Input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} /></div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Отмена</Button>
-            <Button onClick={save}>{editing ? 'Сохранить' : 'Добавить'}</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
