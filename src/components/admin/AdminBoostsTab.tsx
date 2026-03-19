@@ -1,60 +1,86 @@
-import { useApp } from '@/context/AppContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
-import type { BoostItem } from '@/types';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+
+interface BoostRow {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  xp_cost: number;
+  effect: string;
+}
+
+const EFFECT_OPTIONS = [
+  { value: 'visual_theme', label: '🎨 Визуальная тема' },
+  { value: 'visual_badge', label: '🏅 Визуальный бейдж' },
+  { value: 'visual_frame', label: '🖼️ Рамка профиля' },
+  { value: 'xp_boost', label: '⚡ Бонус XP' },
+  { value: 'skip_task', label: '⏭️ Пропуск задания' },
+  { value: 'extra_break', label: '☕ Доп. перерыв' },
+  { value: 'custom', label: '✏️ Кастомный' },
+];
 
 export default function AdminBoostsTab() {
-  const { state, updateState, boostItems } = useApp();
-  const allBoosts = [...boostItems, ...state.customBoosts];
+  const { user } = useAuth();
+  const [boosts, setBoosts] = useState<BoostRow[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editing, setEditing] = useState<BoostItem | null>(null);
-  const [form, setForm] = useState({ name: '', description: '', icon: '🎁', xpCost: 100, effect: '' });
+  const [editing, setEditing] = useState<BoostRow | null>(null);
+  const [form, setForm] = useState({ name: '', description: '', icon: '🎁', xp_cost: 100, effect: 'visual_badge' });
+
+  useEffect(() => { loadBoosts(); }, []);
+
+  async function loadBoosts() {
+    const { data } = await supabase.from('boost_items').select('*').order('created_at', { ascending: false });
+    if (data) setBoosts(data as unknown as BoostRow[]);
+  }
 
   function openCreate() {
     setEditing(null);
-    setForm({ name: '', description: '', icon: '🎁', xpCost: 100, effect: '' });
+    setForm({ name: '', description: '', icon: '🎁', xp_cost: 100, effect: 'visual_badge' });
     setDialogOpen(true);
   }
 
-  function openEdit(b: BoostItem) {
+  function openEdit(b: BoostRow) {
     setEditing(b);
-    setForm({ name: b.name, description: b.description, icon: b.icon, xpCost: b.xpCost, effect: b.effect });
+    setForm({ name: b.name, description: b.description, icon: b.icon, xp_cost: b.xp_cost, effect: b.effect });
     setDialogOpen(true);
   }
 
-  function save() {
+  async function save() {
     if (!form.name.trim()) { toast.error('Укажите название'); return; }
     if (editing) {
-      updateState(prev => ({
-        customBoosts: prev.customBoosts.map(b => b.id === editing.id ? { ...b, ...form } : b),
-      }));
-      toast.success('Буст обновлён');
+      await supabase.from('boost_items').update(form).eq('id', editing.id);
+      toast.success('Плюшка обновлена');
     } else {
-      const boost: BoostItem = { id: `boost_${crypto.randomUUID()}`, ...form };
-      updateState(prev => ({ customBoosts: [...prev.customBoosts, boost] }));
-      toast.success('Буст создан');
+      await supabase.from('boost_items').insert({ ...form, created_by: user?.id });
+      toast.success('Плюшка создана');
     }
     setDialogOpen(false);
+    loadBoosts();
   }
 
-  function remove(id: string) {
-    if (!confirm('Удалить буст?')) return;
-    updateState(prev => ({ customBoosts: prev.customBoosts.filter(b => b.id !== id) }));
-    toast.success('Буст удалён');
+  async function remove(id: string) {
+    if (!confirm('Удалить плюшку?')) return;
+    await supabase.from('boost_items').delete().eq('id', id);
+    toast.success('Плюшка удалена');
+    loadBoosts();
   }
 
-  const isCustom = (id: string) => state.customBoosts.some(b => b.id === id);
+  const effectLabel = (val: string) => EFFECT_OPTIONS.find(o => o.value === val)?.label || val;
 
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="font-display font-semibold text-lg text-foreground">Бусты ({allBoosts.length})</h2>
+        <h2 className="font-display font-semibold text-lg text-foreground">🎁 Магазин плюшек ({boosts.length})</h2>
         <Button size="sm" onClick={openCreate}><Plus className="w-4 h-4 mr-1" /> Добавить</Button>
       </div>
 
@@ -62,32 +88,27 @@ export default function AdminBoostsTab() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Иконка</TableHead>
+              <TableHead></TableHead>
               <TableHead>Название</TableHead>
-              <TableHead>Описание</TableHead>
-              <TableHead>Стоимость XP</TableHead>
-              <TableHead>Эффект</TableHead>
+              <TableHead>Тип</TableHead>
+              <TableHead>Стоимость</TableHead>
               <TableHead className="text-right">Действия</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {allBoosts.map(b => (
+            {boosts.map(b => (
               <TableRow key={b.id}>
                 <TableCell className="text-xl">{b.icon}</TableCell>
-                <TableCell className="font-medium">{b.name}</TableCell>
-                <TableCell className="text-muted-foreground text-sm">{b.description}</TableCell>
-                <TableCell className="font-medium text-accent">{b.xpCost} XP</TableCell>
-                <TableCell className="text-sm">{b.effect}</TableCell>
+                <TableCell>
+                  <div className="font-medium">{b.name}</div>
+                  <div className="text-xs text-muted-foreground">{b.description}</div>
+                </TableCell>
+                <TableCell className="text-sm">{effectLabel(b.effect)}</TableCell>
+                <TableCell className="font-medium text-accent">{b.xp_cost} XP</TableCell>
                 <TableCell>
                   <div className="flex gap-1 justify-end">
-                    {isCustom(b.id) ? (
-                      <>
-                        <Button variant="ghost" size="icon" onClick={() => openEdit(b)}><Pencil className="w-4 h-4" /></Button>
-                        <Button variant="ghost" size="icon" onClick={() => remove(b.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
-                      </>
-                    ) : (
-                      <span className="text-xs text-muted-foreground px-2">Встроенный</span>
-                    )}
+                    <Button variant="ghost" size="icon" onClick={() => openEdit(b)}><Pencil className="w-4 h-4" /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => remove(b.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                   </div>
                 </TableCell>
               </TableRow>
@@ -98,15 +119,23 @@ export default function AdminBoostsTab() {
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-md">
-          <DialogHeader><DialogTitle>{editing ? 'Редактировать буст' : 'Новый буст'}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editing ? 'Редактировать плюшку' : 'Новая плюшка'}</DialogTitle></DialogHeader>
           <div className="space-y-3">
             <div className="grid grid-cols-[60px_1fr] gap-3">
               <div><Label>Иконка</Label><Input value={form.icon} onChange={e => setForm(f => ({ ...f, icon: e.target.value }))} className="text-center text-xl" /></div>
               <div><Label>Название</Label><Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} /></div>
             </div>
             <div><Label>Описание</Label><Input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} /></div>
-            <div><Label>Стоимость XP</Label><Input type="number" value={form.xpCost} onChange={e => setForm(f => ({ ...f, xpCost: Number(e.target.value) }))} /></div>
-            <div><Label>Эффект</Label><Input value={form.effect} onChange={e => setForm(f => ({ ...f, effect: e.target.value }))} placeholder="rest, music, theme..." /></div>
+            <div>
+              <Label>Тип эффекта</Label>
+              <Select value={form.effect} onValueChange={v => setForm(f => ({ ...f, effect: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {EFFECT_OPTIONS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div><Label>Стоимость XP</Label><Input type="number" value={form.xp_cost} onChange={e => setForm(f => ({ ...f, xp_cost: Number(e.target.value) }))} /></div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Отмена</Button>

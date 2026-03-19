@@ -1,4 +1,4 @@
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, FileText, Users, Calendar, Trophy, BarChart3, ShoppingBag, Settings, Menu, X, BookOpen, LogOut, Zap, Target, Award } from 'lucide-react';
 import { useState } from 'react';
 import { useApp } from '@/context/AppContext';
@@ -25,7 +25,7 @@ const leaderNavItems = [
   { to: '/contests', icon: Trophy, label: 'Конкурсы' },
   { to: '/activities', icon: Target, label: 'Активности' },
   { to: '/manage-achievements', icon: Award, label: 'Достижения' },
-  { to: '/manage-boosts', icon: Zap, label: 'Бусты' },
+  { to: '/manage-boosts', icon: Zap, label: 'Магазин плюшек' },
   { to: '/knowledge', icon: BookOpen, label: 'База знаний' },
   { to: '/settings', icon: Settings, label: 'Настройки' },
 ];
@@ -44,7 +44,7 @@ export default function AppSidebar() {
   const sidebar = (
     <div className="flex flex-col h-full bg-sidebar border-r border-sidebar-border">
       <div className="p-5 border-b border-sidebar-border">
-        <h1 className="font-display text-xl font-bold text-foreground">SalesForce</h1>
+        <h1 className="font-display text-xl font-bold text-foreground tracking-tight">SalesForce</h1>
         <p className="text-xs text-muted-foreground mt-0.5">
           {role === 'leader' ? '🛡️ Руководитель' : '📊 Менеджер продаж'}
         </p>
@@ -125,7 +125,7 @@ export default function AppSidebar() {
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
               className="md:hidden fixed left-0 top-0 bottom-0 w-72 z-50 shadow-xl"
             >
-              <button onClick={() => setMobileOpen(false)} className="absolute top-4 right-4 p-1">
+              <button onClick={() => setMobileOpen(false)} className="absolute top-4 right-4 p-1 z-10">
                 <X className="w-5 h-5" />
               </button>
               {sidebar}

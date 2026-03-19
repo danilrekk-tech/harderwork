@@ -81,7 +81,6 @@ function saveState(state: AppState, userId?: string) {
   localStorage.setItem(key, JSON.stringify(state));
 }
 
-// Core action processor
 function performAction(prev: AppState, actionType: ActionEvent['type'], xpBase: number, description: string): AppState {
   const now = new Date().toISOString();
   const today = todayStr();
@@ -250,8 +249,8 @@ function checkRecords(state: AppState): AppState {
   return { ...state, personalRecords: records };
 }
 
-// Sync key profile data to Supabase
-async function syncProfileToDb(userId: string, state: AppState) {
+// Sync profile + invoices + clients to Supabase
+async function syncToDb(userId: string, state: AppState) {
   try {
     await supabase.from('profiles').update({
       level: state.profile.level,
@@ -266,6 +265,61 @@ async function syncProfileToDb(userId: string, state: AppState) {
   } catch { /* silent */ }
 }
 
+async function syncInvoicesToDb(userId: string, invoices: Invoice[]) {
+  try {
+    // Get existing invoices
+    const { data: existing } = await supabase.from('invoices').select('id').eq('user_id', userId);
+    const existingIds = new Set((existing || []).map(e => e.id));
+
+    // Insert new invoices
+    const newInvoices = invoices.filter(i => !existingIds.has(i.id));
+    if (newInvoices.length > 0) {
+      await supabase.from('invoices').insert(
+        newInvoices.map(i => ({
+          id: i.id,
+          user_id: userId,
+          amount: i.amount,
+          status: i.status as any,
+          issued_at: i.issuedAt,
+          paid_at: i.paidAt || null,
+          client_id: i.clientId || null,
+        }))
+      );
+    }
+
+    // Update paid invoices
+    const paidInvoices = invoices.filter(i => i.status === 'paid' && existingIds.has(i.id));
+    for (const inv of paidInvoices) {
+      await supabase.from('invoices').update({ status: 'paid' as any, paid_at: inv.paidAt }).eq('id', inv.id);
+    }
+  } catch { /* silent */ }
+}
+
+async function syncClientsToDb(userId: string, clients: Client[]) {
+  try {
+    const { data: existing } = await supabase.from('clients').select('id').eq('user_id', userId);
+    const existingIds = new Set((existing || []).map(e => e.id));
+
+    const newClients = clients.filter(c => !existingIds.has(c.id));
+    if (newClients.length > 0) {
+      await supabase.from('clients').insert(
+        newClients.map(c => ({
+          id: c.id,
+          user_id: userId,
+          name: c.name,
+          company: c.company,
+          phone: c.phone,
+          email: c.email,
+          product: c.product,
+          deal_status: c.dealStatus as any,
+          invoice_amount: c.invoiceAmount,
+          notes: c.notes,
+        }))
+      );
+    }
+  } catch { /* silent */ }
+}
+
 export function useAppStore(userId?: string, role?: string | null, profileName?: string) {
   const [state, setState] = useState<AppState>(() => {
     const loaded = loadState(userId);
@@ -276,7 +330,6 @@ export function useAppStore(userId?: string, role?: string | null, profileName?:
     };
   });
 
-  // Update isAdmin when role changes
   useEffect(() => {
     setState(prev => ({
       ...prev,
@@ -287,12 +340,40 @@ export function useAppStore(userId?: string, role?: string | null, profileName?:
 
   useEffect(() => { saveState(state, userId); }, [state, userId]);
 
-  // Sync profile to DB periodically (debounced)
+  // Sync to DB periodically
   useEffect(() => {
-    if (!userId) return;
-    const timer = setTimeout(() => syncProfileToDb(userId, state), 2000);
+    if (!userId || role === 'leader') return;
+    const timer = setTimeout(() => {
+      syncToDb(userId, state);
+      syncInvoicesToDb(userId, state.invoices);
+      syncClientsToDb(userId, state.clients);
+    }, 2000);
     return () => clearTimeout(timer);
-  }, [userId, state.profile.level, state.profile.totalXpEarned, state.profile.streakDays, state.profile.processedClientsCount]);
+  }, [userId, role, state.profile.level, state.profile.totalXpEarned, state.profile.streakDays, state.profile.processedClientsCount, state.invoices.length, state.clients.length]);
+
+  // Sync action events to DB
+  useEffect(() => {
+    if (!userId || role === 'leader' || state.eventLog.length === 0) return;
+    const latest = state.eventLog[0];
+    if (!latest) return;
+    const timer = setTimeout(async () => {
+      try {
+        const { data: existing } = await supabase.from('action_events').select('id').eq('id', latest.id).maybeSingle();
+        if (!existing) {
+          await supabase.from('action_events').insert({
+            id: latest.id,
+            user_id: userId,
+            type: latest.type,
+            description: latest.description,
+            xp_earned: latest.xpEarned,
+            timestamp: latest.timestamp,
+            manager_name: latest.managerName || state.profile.name,
+          });
+        }
+      } catch { /* silent */ }
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [userId, role, state.eventLog[0]?.id]);
 
   useEffect(() => {
     const today = todayStr();
