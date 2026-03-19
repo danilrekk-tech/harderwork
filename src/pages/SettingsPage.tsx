@@ -3,11 +3,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Copy, Link, Trash2 } from 'lucide-react';
+import { Copy, Link, Trash2, Moon, Sun } from 'lucide-react';
 
 const DAY_LABELS = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
 
@@ -24,10 +24,22 @@ export default function SettingsPage() {
   const { role, user, profileName } = useAuth();
   const [invites, setInvites] = useState<Invite[]>([]);
   const [loadingInvite, setLoadingInvite] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => document.documentElement.classList.contains('dark'));
 
   useEffect(() => {
     if (role === 'leader') loadInvites();
   }, [role]);
+
+  function toggleDarkMode(enabled: boolean) {
+    setDarkMode(enabled);
+    if (enabled) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  }
 
   async function loadInvites() {
     const { data } = await supabase
@@ -60,10 +72,10 @@ export default function SettingsPage() {
     toast.success('Ссылка скопирована');
   }
 
-  async function deleteInvite(id: string) {
+  async function revokeInvite(id: string) {
     await supabase.from('invites').delete().eq('id', id);
     loadInvites();
-    toast.success('Приглашение удалено');
+    toast.success('Приглашение отозвано');
   }
 
   function toggleWorkDay(day: number) {
@@ -96,6 +108,21 @@ export default function SettingsPage() {
           </div>
         </div>
 
+        {/* Theme */}
+        <div className="widget-card">
+          <h2 className="font-display font-semibold text-foreground mb-4">Оформление</h2>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {darkMode ? <Moon className="w-5 h-5 text-muted-foreground" /> : <Sun className="w-5 h-5 text-muted-foreground" />}
+              <div>
+                <div className="text-sm font-medium text-foreground">{darkMode ? 'Тёмная тема' : 'Светлая тема'}</div>
+                <div className="text-xs text-muted-foreground">Переключить оформление</div>
+              </div>
+            </div>
+            <Switch checked={darkMode} onCheckedChange={toggleDarkMode} />
+          </div>
+        </div>
+
         {/* Invite Management (Leader only) */}
         {role === 'leader' && (
           <div className="widget-card">
@@ -120,7 +147,7 @@ export default function SettingsPage() {
                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => copyInviteLink(inv.code)}>
                           <Copy className="w-3 h-3" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => deleteInvite(inv.id)}>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => revokeInvite(inv.id)}>
                           <Trash2 className="w-3 h-3 text-destructive" />
                         </Button>
                       </>
@@ -132,94 +159,37 @@ export default function SettingsPage() {
           </div>
         )}
 
-        {/* Plan Settings */}
-        <div className="widget-card">
-          <h2 className="font-display font-semibold text-foreground mb-4">План продаж</h2>
-          <div className="space-y-3">
-            <div>
-              <Label className="text-sm text-muted-foreground">Тип плана</Label>
-              <Select value={state.planSettings.type} onValueChange={v => updateState(() => ({ planSettings: { ...state.planSettings, type: v as 'amount' | 'count' } }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="amount">По сумме (₽)</SelectItem>
-                  <SelectItem value="count">По количеству счетов</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="text-sm text-muted-foreground">Цель</Label>
-              <Input type="number" value={state.planSettings.target} onChange={e => updateState(() => ({ planSettings: { ...state.planSettings, target: Number(e.target.value) } }))} />
-            </div>
-          </div>
-        </div>
-
-        {/* Multi-level Plan */}
-        <div className="widget-card">
-          <h2 className="font-display font-semibold text-foreground mb-4">Многоуровневые цели</h2>
-          <div className="space-y-4">
-            <div>
-              <Label className="text-sm text-muted-foreground font-medium">📄 Счета</Label>
-              <div className="grid grid-cols-3 gap-2 mt-1">
-                {['min', 'norm', 'challenge'].map(level => (
-                  <div key={level}>
-                    <Label className="text-xs text-muted-foreground">{level === 'min' ? 'Минимум' : level === 'norm' ? 'Норма' : 'Челлендж'}</Label>
-                    <Input
-                      type="number"
-                      value={state.multiLevelPlan.invoices[level as keyof typeof state.multiLevelPlan.invoices]}
-                      onChange={e => updateState(() => ({
-                        multiLevelPlan: { ...state.multiLevelPlan, invoices: { ...state.multiLevelPlan.invoices, [level]: Number(e.target.value) } }
-                      }))}
-                    />
+        {/* Manager-only settings */}
+        {role !== 'leader' && (
+          <>
+            {/* Work Schedule */}
+            <div className="widget-card">
+              <h2 className="font-display font-semibold text-foreground mb-4">Рабочее расписание</h2>
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-sm text-muted-foreground mb-2 block">Рабочие дни</Label>
+                  <div className="flex gap-2 flex-wrap">
+                    {DAY_LABELS.map((label, i) => (
+                      <Button key={i} variant={state.workSchedule.workDays.includes(i) ? 'default' : 'outline'} size="sm" onClick={() => toggleWorkDay(i)}>
+                        {label}
+                      </Button>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </div>
-            <div>
-              <Label className="text-sm text-muted-foreground font-medium">💰 Оплаты</Label>
-              <div className="grid grid-cols-3 gap-2 mt-1">
-                {['min', 'norm', 'challenge'].map(level => (
-                  <div key={level}>
-                    <Label className="text-xs text-muted-foreground">{level === 'min' ? 'Минимум' : level === 'norm' ? 'Норма' : 'Челлендж'}</Label>
-                    <Input
-                      type="number"
-                      value={state.multiLevelPlan.payments[level as keyof typeof state.multiLevelPlan.payments]}
-                      onChange={e => updateState(() => ({
-                        multiLevelPlan: { ...state.multiLevelPlan, payments: { ...state.multiLevelPlan.payments, [level]: Number(e.target.value) } }
-                      }))}
-                    />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm text-muted-foreground">Начало смены</Label>
+                    <Input type="time" value={state.workSchedule.startTime} onChange={e => updateState(() => ({ workSchedule: { ...state.workSchedule, startTime: e.target.value } }))} />
                   </div>
-                ))}
+                  <div>
+                    <Label className="text-sm text-muted-foreground">Конец смены</Label>
+                    <Input type="time" value={state.workSchedule.endTime} onChange={e => updateState(() => ({ workSchedule: { ...state.workSchedule, endTime: e.target.value } }))} />
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* Work Schedule */}
-        <div className="widget-card">
-          <h2 className="font-display font-semibold text-foreground mb-4">Рабочее расписание</h2>
-          <div className="space-y-4">
-            <div>
-              <Label className="text-sm text-muted-foreground mb-2 block">Рабочие дни</Label>
-              <div className="flex gap-2 flex-wrap">
-                {DAY_LABELS.map((label, i) => (
-                  <Button key={i} variant={state.workSchedule.workDays.includes(i) ? 'default' : 'outline'} size="sm" onClick={() => toggleWorkDay(i)}>
-                    {label}
-                  </Button>
-                ))}
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label className="text-sm text-muted-foreground">Начало смены</Label>
-                <Input type="time" value={state.workSchedule.startTime} onChange={e => updateState(() => ({ workSchedule: { ...state.workSchedule, startTime: e.target.value } }))} />
-              </div>
-              <div>
-                <Label className="text-sm text-muted-foreground">Конец смены</Label>
-                <Input type="time" value={state.workSchedule.endTime} onChange={e => updateState(() => ({ workSchedule: { ...state.workSchedule, endTime: e.target.value } }))} />
-              </div>
-            </div>
-          </div>
-        </div>
+          </>
+        )}
       </div>
     </div>
   );

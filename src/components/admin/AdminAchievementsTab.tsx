@@ -1,4 +1,3 @@
-import { useApp } from '@/context/AppContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -6,11 +5,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
-import type { Achievement, AchievementCondition } from '@/types';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
-const CONDITION_LABELS: Record<AchievementCondition['type'], string> = {
+const CONDITION_LABELS: Record<string, string> = {
   invoices_issued: 'Выставлено счетов',
   invoices_paid: 'Оплачено счетов',
   clients_processed: 'Обработано клиентов',
@@ -23,69 +23,76 @@ const CONDITION_LABELS: Record<AchievementCondition['type'], string> = {
   plan_overfulfilled: 'Перевыполнение плана %',
 };
 
+interface AchievementRow {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  xp_reward: number;
+  condition_type: string;
+  condition_target: number;
+}
+
 export default function AdminAchievementsTab() {
-  const { state, updateState } = useApp();
-  const allAchievements = [...state.achievements, ...state.customAchievements];
+  const { user } = useAuth();
+  const [achievements, setAchievements] = useState<AchievementRow[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editing, setEditing] = useState<Achievement | null>(null);
+  const [editing, setEditing] = useState<AchievementRow | null>(null);
   const [form, setForm] = useState({
-    title: '', description: '', icon: '🏆', xpReward: 100,
-    conditionType: 'invoices_issued' as AchievementCondition['type'], conditionTarget: 1,
+    title: '', description: '', icon: '🏆', xp_reward: 100,
+    condition_type: 'invoices_issued', condition_target: 1,
   });
+
+  useEffect(() => { loadAchievements(); }, []);
+
+  async function loadAchievements() {
+    const { data } = await supabase.from('achievements').select('*').order('created_at', { ascending: false });
+    if (data) setAchievements(data as unknown as AchievementRow[]);
+  }
 
   function openCreate() {
     setEditing(null);
-    setForm({ title: '', description: '', icon: '🏆', xpReward: 100, conditionType: 'invoices_issued', conditionTarget: 1 });
+    setForm({ title: '', description: '', icon: '🏆', xp_reward: 100, condition_type: 'invoices_issued', condition_target: 1 });
     setDialogOpen(true);
   }
 
-  function openEdit(a: Achievement) {
+  function openEdit(a: AchievementRow) {
     setEditing(a);
-    setForm({ title: a.title, description: a.description, icon: a.icon, xpReward: a.xpReward, conditionType: a.condition.type, conditionTarget: a.condition.target });
+    setForm({ title: a.title, description: a.description, icon: a.icon, xp_reward: a.xp_reward, condition_type: a.condition_type, condition_target: a.condition_target });
     setDialogOpen(true);
   }
 
-  function save() {
+  async function save() {
     if (!form.title.trim()) { toast.error('Укажите название'); return; }
-    const condition: AchievementCondition = { type: form.conditionType, target: form.conditionTarget };
     if (editing) {
-      // Check if it's a built-in or custom
-      const isBuiltIn = state.achievements.some(a => a.id === editing.id);
-      if (isBuiltIn) {
-        updateState(prev => ({
-          achievements: prev.achievements.map(a => a.id === editing.id ? { ...a, title: form.title, description: form.description, icon: form.icon, xpReward: form.xpReward, condition } : a),
-        }));
-      } else {
-        updateState(prev => ({
-          customAchievements: prev.customAchievements.map(a => a.id === editing.id ? { ...a, title: form.title, description: form.description, icon: form.icon, xpReward: form.xpReward, condition } : a),
-        }));
-      }
+      await supabase.from('achievements').update({
+        title: form.title, description: form.description, icon: form.icon,
+        xp_reward: form.xp_reward, condition_type: form.condition_type, condition_target: form.condition_target,
+      }).eq('id', editing.id);
       toast.success('Достижение обновлено');
     } else {
-      const achievement: Achievement = {
-        id: `custom_${crypto.randomUUID()}`, title: form.title, description: form.description, icon: form.icon, xpReward: form.xpReward, condition,
-      };
-      updateState(prev => ({ customAchievements: [...prev.customAchievements, achievement] }));
+      await supabase.from('achievements').insert({
+        title: form.title, description: form.description, icon: form.icon,
+        xp_reward: form.xp_reward, condition_type: form.condition_type, condition_target: form.condition_target,
+        created_by: user?.id,
+      });
       toast.success('Достижение создано');
     }
     setDialogOpen(false);
+    loadAchievements();
   }
 
-  function remove(id: string) {
+  async function remove(id: string) {
     if (!confirm('Удалить достижение?')) return;
-    const isBuiltIn = state.achievements.some(a => a.id === id);
-    if (isBuiltIn) {
-      updateState(prev => ({ achievements: prev.achievements.filter(a => a.id !== id) }));
-    } else {
-      updateState(prev => ({ customAchievements: prev.customAchievements.filter(a => a.id !== id) }));
-    }
+    await supabase.from('achievements').delete().eq('id', id);
     toast.success('Достижение удалено');
+    loadAchievements();
   }
 
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="font-display font-semibold text-lg text-foreground">Достижения ({allAchievements.length})</h2>
+        <h2 className="font-display font-semibold text-lg text-foreground">Достижения ({achievements.length})</h2>
         <Button size="sm" onClick={openCreate}><Plus className="w-4 h-4 mr-1" /> Добавить</Button>
       </div>
 
@@ -93,22 +100,23 @@ export default function AdminAchievementsTab() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Иконка</TableHead>
+              <TableHead></TableHead>
               <TableHead>Название</TableHead>
-              <TableHead>Описание</TableHead>
               <TableHead>Условие</TableHead>
               <TableHead>XP</TableHead>
               <TableHead className="text-right">Действия</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {allAchievements.map(a => (
+            {achievements.map(a => (
               <TableRow key={a.id}>
                 <TableCell className="text-xl">{a.icon}</TableCell>
-                <TableCell className="font-medium">{a.title}</TableCell>
-                <TableCell className="text-muted-foreground text-sm">{a.description}</TableCell>
-                <TableCell className="text-sm">{CONDITION_LABELS[a.condition.type]}: {a.condition.target.toLocaleString('ru-RU')}</TableCell>
-                <TableCell className="font-medium text-accent">+{a.xpReward}</TableCell>
+                <TableCell>
+                  <div className="font-medium">{a.title}</div>
+                  <div className="text-xs text-muted-foreground">{a.description}</div>
+                </TableCell>
+                <TableCell className="text-sm">{CONDITION_LABELS[a.condition_type] || a.condition_type}: {a.condition_target.toLocaleString('ru-RU')}</TableCell>
+                <TableCell className="font-medium text-accent">+{a.xp_reward}</TableCell>
                 <TableCell>
                   <div className="flex gap-1 justify-end">
                     <Button variant="ghost" size="icon" onClick={() => openEdit(a)}><Pencil className="w-4 h-4" /></Button>
@@ -132,7 +140,7 @@ export default function AdminAchievementsTab() {
             <div><Label>Описание</Label><Input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} /></div>
             <div>
               <Label>Условие</Label>
-              <Select value={form.conditionType} onValueChange={v => setForm(f => ({ ...f, conditionType: v as AchievementCondition['type'] }))}>
+              <Select value={form.condition_type} onValueChange={v => setForm(f => ({ ...f, condition_type: v }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {Object.entries(CONDITION_LABELS).map(([k, v]) => (
@@ -141,8 +149,8 @@ export default function AdminAchievementsTab() {
                 </SelectContent>
               </Select>
             </div>
-            <div><Label>Цель</Label><Input type="number" value={form.conditionTarget} onChange={e => setForm(f => ({ ...f, conditionTarget: Number(e.target.value) }))} /></div>
-            <div><Label>XP награда</Label><Input type="number" value={form.xpReward} onChange={e => setForm(f => ({ ...f, xpReward: Number(e.target.value) }))} /></div>
+            <div><Label>Цель</Label><Input type="number" value={form.condition_target} onChange={e => setForm(f => ({ ...f, condition_target: Number(e.target.value) }))} /></div>
+            <div><Label>XP награда</Label><Input type="number" value={form.xp_reward} onChange={e => setForm(f => ({ ...f, xp_reward: Number(e.target.value) }))} /></div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Отмена</Button>

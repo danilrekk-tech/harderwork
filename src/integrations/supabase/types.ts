@@ -385,6 +385,60 @@ export type Database = {
           },
         ]
       }
+      penalties: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          reason: string
+          user_id: string
+          xp_amount: number
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          reason?: string
+          user_id: string
+          xp_amount?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          reason?: string
+          user_id?: string
+          xp_amount?: number
+        }
+        Relationships: []
+      }
+      penalty_templates: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string
+          id: string
+          title: string
+          xp_amount: number
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string
+          id?: string
+          title: string
+          xp_amount?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string
+          id?: string
+          title?: string
+          xp_amount?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -507,6 +561,36 @@ export type Database = {
           is_active?: boolean
           number?: number
           start_date?: string
+        }
+        Relationships: []
+      }
+      team_plan: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          month: string
+          plan_target: number
+          plan_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          month: string
+          plan_target?: number
+          plan_type?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          month?: string
+          plan_target?: number
+          plan_type?: string
+          updated_at?: string
         }
         Relationships: []
       }

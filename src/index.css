@@ -6,52 +6,100 @@
 
 @layer base {
   :root {
-    --background: 0 0% 98%;
-    --foreground: 220 20% 15%;
+    --background: 0 0% 99%;
+    --foreground: 220 25% 10%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 20% 15%;
+    --card-foreground: 220 25% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 20% 15%;
+    --popover-foreground: 220 25% 10%;
 
-    --primary: 152 60% 42%;
+    --primary: 152 55% 40%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 14% 94%;
-    --secondary-foreground: 220 20% 15%;
+    --secondary: 220 15% 95%;
+    --secondary-foreground: 220 25% 10%;
 
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 10% 50%;
+    --muted: 220 15% 96%;
+    --muted-foreground: 220 10% 46%;
 
-    --accent: 38 92% 55%;
+    --accent: 38 90% 52%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 72% 55%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 14% 90%;
-    --input: 220 14% 90%;
-    --ring: 152 60% 42%;
+    --border: 220 15% 91%;
+    --input: 220 15% 91%;
+    --ring: 152 55% 40%;
 
     --radius: 0.75rem;
 
-    --xp: 38 92% 55%;
-    --xp-foreground: 38 92% 15%;
-    --success: 152 60% 42%;
+    --xp: 38 90% 52%;
+    --xp-foreground: 38 90% 15%;
+    --success: 152 55% 40%;
     --info: 210 80% 55%;
+    --warning: 38 90% 52%;
+    --penalty: 0 72% 51%;
 
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 220 20% 25%;
-    --sidebar-primary: 152 60% 42%;
+    --sidebar-primary: 152 55% 40%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 152 60% 95%;
-    --sidebar-accent-foreground: 152 60% 30%;
-    --sidebar-border: 220 14% 92%;
-    --sidebar-ring: 152 60% 42%;
+    --sidebar-accent: 152 55% 96%;
+    --sidebar-accent-foreground: 152 55% 28%;
+    --sidebar-border: 220 15% 93%;
+    --sidebar-ring: 152 55% 40%;
 
     --font-display: 'Space Grotesk', sans-serif;
     --font-body: 'Inter', sans-serif;
+  }
+
+  .dark {
+    --background: 222 25% 8%;
+    --foreground: 210 20% 92%;
+
+    --card: 222 25% 11%;
+    --card-foreground: 210 20% 92%;
+
+    --popover: 222 25% 11%;
+    --popover-foreground: 210 20% 92%;
+
+    --primary: 152 55% 45%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 222 20% 16%;
+    --secondary-foreground: 210 20% 92%;
+
+    --muted: 222 20% 15%;
+    --muted-foreground: 220 10% 55%;
+
+    --accent: 38 85% 55%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 222 20% 18%;
+    --input: 222 20% 18%;
+    --ring: 152 55% 45%;
+
+    --xp: 38 85% 55%;
+    --xp-foreground: 38 85% 90%;
+    --success: 152 55% 45%;
+    --info: 210 80% 60%;
+    --warning: 38 85% 55%;
+    --penalty: 0 70% 50%;
+
+    --sidebar-background: 222 25% 9%;
+    --sidebar-foreground: 210 20% 80%;
+    --sidebar-primary: 152 55% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 222 20% 14%;
+    --sidebar-accent-foreground: 152 55% 60%;
+    --sidebar-border: 222 20% 16%;
+    --sidebar-ring: 152 55% 45%;
   }
 }
 
@@ -62,6 +110,8 @@
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
@@ -70,10 +120,11 @@
 
 @layer components {
   .widget-card {
-    @apply bg-card rounded-xl border border-border shadow-sm p-5 transition-all duration-200;
+    @apply bg-card rounded-xl border border-border p-5 transition-all duration-200;
+    box-shadow: 0 1px 3px 0 hsl(var(--foreground) / 0.04), 0 1px 2px -1px hsl(var(--foreground) / 0.04);
   }
   .widget-card:hover {
-    box-shadow: 0 4px 24px -4px hsl(var(--primary) / 0.08);
+    box-shadow: 0 4px 16px -4px hsl(var(--primary) / 0.08), 0 2px 4px -2px hsl(var(--foreground) / 0.04);
   }
   .xp-bar {
     @apply h-2 rounded-full overflow-hidden;
@@ -81,10 +132,7 @@
   }
   .xp-bar-fill {
     @apply h-full rounded-full transition-all duration-700 ease-out;
-    background: linear-gradient(90deg, hsl(var(--accent)), hsl(38 92% 65%));
-  }
-  .progress-ring {
-    @apply relative inline-flex items-center justify-center;
+    background: linear-gradient(90deg, hsl(var(--accent)), hsl(38 85% 62%));
   }
   .stat-value {
     @apply text-3xl font-bold tracking-tight;
@@ -102,11 +150,11 @@
   }
   .level-badge {
     @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-semibold;
-    background: linear-gradient(135deg, hsl(var(--accent)), hsl(38 80% 50%));
+    background: linear-gradient(135deg, hsl(var(--accent)), hsl(38 78% 48%));
     color: hsl(var(--accent-foreground));
   }
   .nav-item {
-    @apply flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-150;
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150;
     color: hsl(var(--sidebar-foreground));
   }
   .nav-item:hover {
@@ -133,12 +181,12 @@
     background: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--accent)));
   }
   .momentum-bar-fill.momentum-active {
-    background: linear-gradient(90deg, hsl(var(--accent)), hsl(38 92% 65%));
+    background: linear-gradient(90deg, hsl(var(--accent)), hsl(38 85% 62%));
     animation: pulse-glow 1s ease-in-out infinite;
   }
   .combo-badge {
     @apply inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold;
-    background: linear-gradient(135deg, hsl(var(--accent)), hsl(38 80% 50%));
+    background: linear-gradient(135deg, hsl(var(--accent)), hsl(38 78% 48%));
     color: hsl(var(--accent-foreground));
     animation: combo-pop 0.3s ease-out;
   }
@@ -151,6 +199,14 @@
   }
   .quick-action-btn:active {
     @apply scale-[0.98];
+  }
+  .premium-glow {
+    box-shadow: 0 0 40px -12px hsl(var(--primary) / 0.15);
+  }
+  .penalty-badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold;
+    background: hsl(var(--destructive) / 0.1);
+    color: hsl(var(--destructive));
   }
 }
 
@@ -170,18 +226,6 @@
 @keyframes shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
-}
-
-@keyframes level-up {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.15); }
-  100% { transform: scale(1); }
-}
-
-@keyframes confetti-pop {
-  0% { transform: scale(0) rotate(0deg); opacity: 0; }
-  50% { transform: scale(1.2) rotate(180deg); opacity: 1; }
-  100% { transform: scale(1) rotate(360deg); opacity: 1; }
 }
 
 @keyframes pulse-glow {
