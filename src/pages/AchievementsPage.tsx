@@ -16,7 +16,11 @@ export default function AchievementsPage() {
     });
   }, [state.achievements, state.unlockedAchievements]);
 
-  // Progress for each achievement
+  // Separate collection achievements from standalone
+  const collectionAchievements = new Set(state.collections.flatMap(c => c.achievementIds));
+  const standaloneAchievements = sorted.filter(a => !collectionAchievements.has(a.id));
+  const inCollectionAchievements = sorted.filter(a => collectionAchievements.has(a.id));
+
   const getProgress = (ach: typeof state.achievements[0]) => {
     const issuedCount = state.invoices.length;
     const paidCount = state.invoices.filter(i => i.status === 'paid').length;
@@ -43,10 +47,13 @@ export default function AchievementsPage() {
         Разблокировано: {state.unlockedAchievements.length} / {state.achievements.length}
       </p>
 
-      {/* Collections */}
+      {/* Collections Section */}
       <div className="mb-8">
-        <h2 className="text-lg font-display font-semibold text-foreground mb-3">🎖 Коллекции</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="flex items-center gap-2 mb-4">
+          <h2 className="text-lg font-display font-semibold text-foreground">🎖 Коллекции</h2>
+          <div className="flex-1 h-px bg-border" />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
           {state.collections.map(col => {
             const completed = state.completedCollections.includes(col.id);
             const unlocked = col.achievementIds.filter(id => state.unlockedAchievements.includes(id)).length;
@@ -56,7 +63,7 @@ export default function AchievementsPage() {
                 key={col.id}
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className={`widget-card ${completed ? 'border-accent' : ''}`}
+                className={`widget-card ${completed ? 'border-accent premium-glow' : ''}`}
               >
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-2xl">{col.icon}</span>
@@ -74,37 +81,76 @@ export default function AchievementsPage() {
             );
           })}
         </div>
+
+        {/* Collection achievements */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {inCollectionAchievements.map((ach, i) => {
+            const unlocked = state.unlockedAchievements.includes(ach.id);
+            const progress = getProgress(ach);
+            return (
+              <motion.div
+                key={ach.id}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: i * 0.02 }}
+                className={`achievement-card ${unlocked ? 'unlocked' : 'opacity-60'}`}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xl">{ach.icon}</span>
+                  <div className="font-display font-semibold text-sm text-foreground">{ach.title}</div>
+                </div>
+                <div className="text-xs text-muted-foreground">{ach.description}</div>
+                {!unlocked && (
+                  <div className="mt-2">
+                    <Progress value={progress.pct} className="h-1.5" />
+                    <div className="text-xs text-muted-foreground mt-0.5">{progress.current}/{progress.target}</div>
+                  </div>
+                )}
+                <div className="mt-1 flex items-center gap-2">
+                  <span className="text-xs font-medium text-accent">+{ach.xpReward} XP</span>
+                  {unlocked && <span className="text-xs text-primary font-medium">✅</span>}
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
       </div>
 
-      {/* All achievements */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {sorted.map((ach, i) => {
-          const unlocked = state.unlockedAchievements.includes(ach.id);
-          const progress = getProgress(ach);
-          return (
-            <motion.div
-              key={ach.id}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: i * 0.03 }}
-              className={`achievement-card ${unlocked ? 'unlocked' : 'opacity-60'}`}
-            >
-              <div className="text-3xl mb-2">{ach.icon}</div>
-              <div className="font-display font-semibold text-foreground">{ach.title}</div>
-              <div className="text-sm text-muted-foreground mt-1">{ach.description}</div>
-              {!unlocked && (
-                <div className="mt-2">
-                  <Progress value={progress.pct} className="h-1.5" />
-                  <div className="text-xs text-muted-foreground mt-0.5">{progress.current}/{progress.target}</div>
+      {/* Standalone Achievements Section */}
+      <div>
+        <div className="flex items-center gap-2 mb-4">
+          <h2 className="text-lg font-display font-semibold text-foreground">⭐ Особые достижения</h2>
+          <div className="flex-1 h-px bg-border" />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {standaloneAchievements.map((ach, i) => {
+            const unlocked = state.unlockedAchievements.includes(ach.id);
+            const progress = getProgress(ach);
+            return (
+              <motion.div
+                key={ach.id}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: i * 0.03 }}
+                className={`achievement-card ${unlocked ? 'unlocked' : 'opacity-60'}`}
+              >
+                <div className="text-3xl mb-2">{ach.icon}</div>
+                <div className="font-display font-semibold text-foreground">{ach.title}</div>
+                <div className="text-sm text-muted-foreground mt-1">{ach.description}</div>
+                {!unlocked && (
+                  <div className="mt-2">
+                    <Progress value={progress.pct} className="h-1.5" />
+                    <div className="text-xs text-muted-foreground mt-0.5">{progress.current}/{progress.target}</div>
+                  </div>
+                )}
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="text-xs font-medium text-accent">+{ach.xpReward} XP</span>
+                  {unlocked && <span className="text-xs text-primary font-medium">✅ Получено</span>}
                 </div>
-              )}
-              <div className="mt-2 flex items-center gap-2">
-                <span className="text-xs font-medium text-accent">+{ach.xpReward} XP</span>
-                {unlocked && <span className="text-xs text-primary font-medium">✅ Получено</span>}
-              </div>
-            </motion.div>
-          );
-        })}
+              </motion.div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
