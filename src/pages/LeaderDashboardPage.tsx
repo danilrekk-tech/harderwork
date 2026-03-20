@@ -1,12 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/contexts/AuthContext';
 import { motion } from 'framer-motion';
-import { toast } from 'sonner';
 
 interface ManagerSummary {
   user_id: string;
@@ -22,7 +18,7 @@ interface ManagerSummary {
 }
 
 export default function LeaderDashboardPage() {
-  const { profileName, user } = useAuth();
+  const { profileName } = useAuth();
   const [loading, setLoading] = useState(true);
   const [managers, setManagers] = useState<ManagerSummary[]>([]);
   const [totalRevenue, setTotalRevenue] = useState(0);
@@ -30,47 +26,11 @@ export default function LeaderDashboardPage() {
   const [paidInvoices, setPaidInvoices] = useState(0);
   const [totalClients, setTotalClients] = useState(0);
   const [activeContests, setActiveContests] = useState(0);
-  const [planType, setPlanType] = useState('amount');
-  const [planTarget, setPlanTarget] = useState(500000);
-  const [planSaved, setPlanSaved] = useState(false);
+  const [planTarget, setPlanTarget] = useState(0);
 
   const currentMonth = new Date().toISOString().slice(0, 7);
 
-  useEffect(() => {
-    loadDashboard();
-    loadPlan();
-  }, []);
-
-  async function loadPlan() {
-    const { data } = await supabase
-      .from('team_plan')
-      .select('*')
-      .eq('month', currentMonth)
-      .maybeSingle();
-    if (data) {
-      setPlanType((data as any).plan_type);
-      setPlanTarget(Number((data as any).plan_target));
-      setPlanSaved(true);
-    }
-  }
-
-  async function savePlan() {
-    if (!user) return;
-    const { error } = await supabase
-      .from('team_plan')
-      .upsert({
-        created_by: user.id,
-        plan_type: planType,
-        plan_target: planTarget,
-        month: currentMonth,
-      } as any, { onConflict: 'created_by,month' });
-    if (error) toast.error('Ошибка сохранения плана');
-    else { toast.success('План сохранён'); setPlanSaved(true); }
-  }
-
-  async function loadDashboard() {
-    setLoading(true);
-
+  const loadDashboard = useCallback(async () => {
     const { data: roles } = await supabase
       .from('user_roles')
       .select('user_id')
@@ -91,10 +51,10 @@ export default function LeaderDashboardPage() {
     const { data: contests } = await supabase.from('contests').select('id').eq('is_active', true);
     setActiveContests(contests?.length || 0);
 
-    // Penalties
-    const { data: penalties } = await supabase.from('penalties').select('user_id, xp_amount');
+    const { data: plan } = await supabase.from('team_plan').select('plan_target').eq('month', currentMonth).maybeSingle();
+    if (plan) setPlanTarget(Number((plan as any).plan_target));
 
-    // Clients per manager
+    const { data: penalties } = await supabase.from('penalties').select('user_id, xp_amount');
     const { data: clientsData } = await supabase.from('clients').select('user_id');
 
     if (managerIds.length > 0) {
@@ -126,7 +86,24 @@ export default function LeaderDashboardPage() {
     }
 
     setLoading(false);
-  }
+  }, [currentMonth]);
+
+  useEffect(() => {
+    loadDashboard();
+  }, [loadDashboard]);
+
+  // Realtime subscriptions
+  useEffect(() => {
+    const channel = supabase
+      .channel('leader-dashboard')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'invoices' }, () => loadDashboard())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'clients' }, () => loadDashboard())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => loadDashboard())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'penalties' }, () => loadDashboard())
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [loadDashboard]);
 
   const conversionRate = totalInvoices > 0 ? Math.round((paidInvoices / totalInvoices) * 100) : 0;
   const now = new Date();
@@ -151,7 +128,7 @@ export default function LeaderDashboardPage() {
         <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">
           🛡️ Панель руководителя
         </h1>
-        <p className="text-sm text-muted-foreground mt-1">{profileName || 'Руководитель'}</p>
+        <p className="text-sm text-muted-foreground mt-1">{profileName || 'Руководитель'} • Данные обновляются в реальном времени</p>
       </div>
 
       {/* Key Metrics */}
@@ -163,7 +140,7 @@ export default function LeaderDashboardPage() {
           { icon: '🏆', value: activeContests, label: 'Конкурсов' },
         ].map((m, i) => (
           <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-            <Card className="p-4 text-center">
+            <Card className="p-4 text-center widget-card">
               <div className="text-2xl mb-1">{m.icon}</div>
               <div className="text-lg font-bold text-foreground">{m.value}</div>
               <div className="text-xs text-muted-foreground">{m.label}</div>
@@ -173,40 +150,26 @@ export default function LeaderDashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        {/* Plan */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-          <Card className="p-5">
-            <h3 className="font-display font-semibold text-foreground mb-3">📋 План на {new Date().toLocaleDateString('ru-RU', { month: 'long' })}</h3>
-            <div className="space-y-3">
-              <div className="flex gap-2">
-                <Select value={planType} onValueChange={setPlanType}>
-                  <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="amount">По сумме</SelectItem>
-                    <SelectItem value="count">По кол-ву</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Input type="number" value={planTarget} onChange={e => { setPlanTarget(Number(e.target.value)); setPlanSaved(false); }} />
-                <Button size="sm" onClick={savePlan} disabled={planSaved} className="shrink-0">
-                  {planSaved ? '✓' : 'Сохранить'}
-                </Button>
+        {/* Plan Progress */}
+        {planTarget > 0 && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+            <Card className="p-5 widget-card">
+              <h3 className="font-display font-semibold text-foreground mb-3">📋 План на {new Date().toLocaleDateString('ru-RU', { month: 'long' })}</h3>
+              <div className="text-2xl font-bold text-foreground mb-1">{totalRevenue.toLocaleString()} / {planTarget.toLocaleString()} ₽</div>
+              <div className="flex justify-between text-sm mb-1">
+                <span className="text-muted-foreground">Прогресс</span>
+                <span className="font-semibold">{planProgress.toFixed(1)}%</span>
               </div>
-              <div>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-muted-foreground">Прогресс</span>
-                  <span className="font-semibold">{planProgress.toFixed(1)}%</span>
-                </div>
-                <div className="h-3 rounded-full bg-muted overflow-hidden">
-                  <div className="h-full rounded-full bg-primary transition-all duration-700" style={{ width: `${planProgress}%` }} />
-                </div>
+              <div className="h-3 rounded-full bg-muted overflow-hidden">
+                <div className="h-full rounded-full bg-primary transition-all duration-700" style={{ width: `${planProgress}%` }} />
               </div>
-            </div>
-          </Card>
-        </motion.div>
+            </Card>
+          </motion.div>
+        )}
 
         {/* Forecast */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
-          <Card className="p-5">
+          <Card className="p-5 widget-card">
             <h3 className="font-display font-semibold text-foreground mb-3">🔮 Прогноз</h3>
             <div className="text-2xl font-bold text-foreground mb-1">{forecastRevenue.toLocaleString()} ₽</div>
             <div className="text-sm text-muted-foreground mb-3">
@@ -224,7 +187,7 @@ export default function LeaderDashboardPage() {
 
       {/* Manager Leaderboard */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-        <Card className="p-5">
+        <Card className="p-5 widget-card">
           <h3 className="font-display font-semibold text-foreground mb-4">🏅 Рейтинг менеджеров</h3>
           {managers.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">
@@ -236,6 +199,9 @@ export default function LeaderDashboardPage() {
                 <div key={m.user_id} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
                   <div className="text-lg font-bold text-muted-foreground w-6 text-center">
                     {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}`}
+                  </div>
+                  <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-sm font-bold text-primary">
+                    {m.name.charAt(0).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">

@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, FileText, Users, Calendar, Trophy, BarChart3, ShoppingBag, Settings, Menu, X, BookOpen, LogOut, Zap, Target, Award } from 'lucide-react';
+import { LayoutDashboard, FileText, Users, Calendar, Trophy, BarChart3, ShoppingBag, Settings, Menu, X, LogOut, Zap, Target, Award } from 'lucide-react';
 import { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -14,7 +14,6 @@ const managerNavItems = [
   { to: '/achievements', icon: Trophy, label: 'Достижения' },
   { to: '/leaderboard', icon: BarChart3, label: 'Лидерборд' },
   { to: '/shop', icon: ShoppingBag, label: 'Магазин' },
-  { to: '/knowledge', icon: BookOpen, label: 'База знаний' },
   { to: '/settings', icon: Settings, label: 'Настройки' },
 ];
 
@@ -25,8 +24,7 @@ const leaderNavItems = [
   { to: '/contests', icon: Trophy, label: 'Конкурсы' },
   { to: '/activities', icon: Target, label: 'Активности' },
   { to: '/manage-achievements', icon: Award, label: 'Достижения' },
-  { to: '/manage-boosts', icon: Zap, label: 'Магазин плюшек' },
-  { to: '/knowledge', icon: BookOpen, label: 'База знаний' },
+  { to: '/manage-boosts', icon: Zap, label: 'Настройки магазина' },
   { to: '/settings', icon: Settings, label: 'Настройки' },
 ];
 
@@ -41,36 +39,49 @@ export default function AppSidebar() {
     ? Math.min(100, (state.profile.xp / state.profile.xpToNextLevel) * 100)
     : 0;
 
+  const displayName = profileName || state.profile.name || (role === 'leader' ? 'Руководитель' : 'Менеджер');
+  const roleLabel = role === 'leader' ? '🛡️ Руководитель' : '📊 Менеджер продаж';
+
   const sidebar = (
     <div className="flex flex-col h-full bg-sidebar border-r border-sidebar-border">
+      {/* Brand */}
       <div className="p-5 border-b border-sidebar-border">
-        <h1 className="font-display text-xl font-bold text-foreground tracking-tight">SalesForce</h1>
-        <p className="text-xs text-muted-foreground mt-0.5">
-          {role === 'leader' ? '🛡️ Руководитель' : '📊 Менеджер продаж'}
-        </p>
+        <h1 className="font-display text-xl font-bold text-foreground tracking-tight">MegaGroup Team</h1>
       </div>
 
-      {role !== 'leader' && (
-        <div className="p-4 border-b border-sidebar-border">
-          <div className="text-sm font-medium text-foreground mb-1 truncate">{profileName || state.profile.name}</div>
-          <div className="flex items-center gap-3">
-            <div className="level-badge text-xs">Ур. {state.profile.level}</div>
-            <div className="flex-1">
-              <div className="text-xs text-muted-foreground mb-1">{state.profile.xp} / {state.profile.xpToNextLevel} XP</div>
-              <div className="xp-bar">
-                <div className="xp-bar-fill" style={{ width: `${xpPercent}%` }} />
-              </div>
-            </div>
+      {/* User Profile Card */}
+      <div className="p-4 border-b border-sidebar-border">
+        <div className="flex items-center gap-3 mb-2">
+          {/* Avatar */}
+          <div className="w-10 h-10 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center text-lg font-bold text-primary flex-shrink-0">
+            {displayName.charAt(0).toUpperCase()}
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="text-sm font-semibold text-foreground truncate">{displayName}</div>
+            <div className="text-xs text-muted-foreground">{roleLabel}</div>
           </div>
         </div>
-      )}
 
-      {role === 'leader' && (
-        <div className="p-4 border-b border-sidebar-border">
-          <div className="text-sm font-medium text-foreground truncate">{profileName || 'Руководитель'}</div>
-        </div>
-      )}
+        {/* Manager: XP bar + level */}
+        {role !== 'leader' && (
+          <div className="mt-2">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="level-badge text-xs">Ур. {state.profile.level}</span>
+              <span className="text-xs text-muted-foreground flex-1 text-right">{state.profile.xp} / {state.profile.xpToNextLevel} XP</span>
+            </div>
+            <div className="xp-bar">
+              <div className="xp-bar-fill" style={{ width: `${xpPercent}%` }} />
+            </div>
+            {state.profile.streakDays > 0 && (
+              <div className="text-xs text-muted-foreground mt-1.5">
+                🔥 Серия: {state.profile.streakDays} дн.
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
+      {/* Nav */}
       <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
         {navItems.map(item => (
           <NavLink
@@ -86,12 +97,7 @@ export default function AppSidebar() {
         ))}
       </nav>
 
-      <div className="p-4 border-t border-sidebar-border space-y-2">
-        {role !== 'leader' && (
-          <div className="text-xs text-muted-foreground">
-            🔥 Серия: {state.profile.streakDays} дн.
-          </div>
-        )}
+      <div className="p-4 border-t border-sidebar-border">
         <Button variant="ghost" size="sm" className="w-full justify-start text-muted-foreground" onClick={signOut}>
           <LogOut className="w-4 h-4 mr-2" /> Выйти
         </Button>
@@ -105,12 +111,13 @@ export default function AppSidebar() {
         {sidebar}
       </aside>
 
-      <button
-        onClick={() => setMobileOpen(true)}
-        className="md:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-card border border-border shadow-md"
-      >
-        <Menu className="w-5 h-5" />
-      </button>
+      {/* Mobile: top bar instead of floating button to avoid text overlap */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-40 h-14 bg-card/95 backdrop-blur-sm border-b border-border flex items-center px-4">
+        <button onClick={() => setMobileOpen(true)} className="p-2 -ml-2 rounded-lg hover:bg-muted">
+          <Menu className="w-5 h-5" />
+        </button>
+        <span className="font-display font-bold text-foreground ml-2">MegaGroup Team</span>
+      </div>
 
       <AnimatePresence>
         {mobileOpen && (
