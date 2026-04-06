@@ -1,5 +1,10 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, FileText, Users, Calendar, Trophy, BarChart3, ShoppingBag, Settings, Menu, X, LogOut, Zap, Target, Award } from 'lucide-react';
+import {
+  LayoutDashboard, FileText, Users, Calendar, Trophy, BarChart3, ShoppingBag, Settings,
+  Menu, X, LogOut, Zap, Target, Award, Brain, Crosshair, ListChecks, Medal, AlertTriangle,
+  Backpack, Bell, ScrollText, UserCircle, Gavel, ClipboardList, Crown, CalendarRange,
+  Package, Send, FileBarChart, BookOpen, Activity, ShoppingCart
+} from 'lucide-react';
 import { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,9 +16,21 @@ const managerNavItems = [
   { to: '/invoices', icon: FileText, label: 'Счета' },
   { to: '/clients', icon: Users, label: 'Клиенты' },
   { to: '/calendar', icon: Calendar, label: 'Календарь' },
+  { to: '/my-analytics', icon: BarChart3, label: 'Моя аналитика' },
+  { to: '/daily-tasks', icon: ListChecks, label: 'Ежедневные задачи' },
+  { to: '/focus', icon: Crosshair, label: 'Фокус-сессия' },
+  { to: '/skills', icon: Brain, label: 'Навыки' },
   { to: '/achievements', icon: Trophy, label: 'Достижения' },
-  { to: '/leaderboard', icon: BarChart3, label: 'Лидерборд' },
+  { to: '/records', icon: Medal, label: 'Рекорды' },
+  { to: '/leaderboard', icon: Crown, label: 'Лидерборд' },
+  { to: '/view-contests', icon: Award, label: 'Конкурсы' },
+  { to: '/view-activities', icon: Target, label: 'Активности' },
   { to: '/shop', icon: ShoppingBag, label: 'Магазин' },
+  { to: '/inventory', icon: Backpack, label: 'Инвентарь' },
+  { to: '/reminders', icon: Bell, label: 'Напоминания' },
+  { to: '/my-penalties', icon: AlertTriangle, label: 'Мои штрафы' },
+  { to: '/event-log', icon: ScrollText, label: 'Журнал действий' },
+  { to: '/profile', icon: UserCircle, label: 'Профиль' },
   { to: '/settings', icon: Settings, label: 'Настройки' },
 ];
 
@@ -21,10 +38,22 @@ const leaderNavItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/managers', icon: Users, label: 'Менеджеры' },
   { to: '/analytics', icon: BarChart3, label: 'Аналитика' },
+  { to: '/all-invoices', icon: FileText, label: 'Все счета' },
+  { to: '/all-clients', icon: Users, label: 'Все клиенты' },
+  { to: '/team-plan', icon: ClipboardList, label: 'План команды' },
+  { to: '/team-leaderboard', icon: Crown, label: 'Лидерборд' },
+  { to: '/reports', icon: FileBarChart, label: 'Отчёты' },
+  { to: '/discipline', icon: Activity, label: 'Дисциплина' },
+  { to: '/team-activity', icon: ScrollText, label: 'Лента активности' },
   { to: '/contests', icon: Trophy, label: 'Конкурсы' },
   { to: '/activities', icon: Target, label: 'Активности' },
+  { to: '/penalties-management', icon: Gavel, label: 'Штрафы' },
   { to: '/manage-achievements', icon: Award, label: 'Достижения' },
+  { to: '/collections', icon: Package, label: 'Коллекции' },
+  { to: '/seasons', icon: CalendarRange, label: 'Сезоны' },
   { to: '/manage-boosts', icon: Zap, label: 'Настройки магазина' },
+  { to: '/shop-analytics', icon: ShoppingCart, label: 'Аналитика магазина' },
+  { to: '/invites', icon: Send, label: 'Приглашения' },
   { to: '/settings', icon: Settings, label: 'Настройки' },
 ];
 
@@ -44,15 +73,12 @@ export default function AppSidebar() {
 
   const sidebar = (
     <div className="flex flex-col h-full bg-sidebar border-r border-sidebar-border">
-      {/* Brand */}
       <div className="p-5 border-b border-sidebar-border">
         <h1 className="font-display text-xl font-bold text-foreground tracking-tight">MegaGroup Team</h1>
       </div>
 
-      {/* User Profile Card */}
       <div className="p-4 border-b border-sidebar-border">
         <div className="flex items-center gap-3 mb-2">
-          {/* Avatar */}
           <div className="w-10 h-10 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center text-lg font-bold text-primary flex-shrink-0">
             {displayName.charAt(0).toUpperCase()}
           </div>
@@ -62,7 +88,6 @@ export default function AppSidebar() {
           </div>
         </div>
 
-        {/* Manager: XP bar + level */}
         {role !== 'leader' && (
           <div className="mt-2">
             <div className="flex items-center gap-2 mb-1">
@@ -81,8 +106,7 @@ export default function AppSidebar() {
         )}
       </div>
 
-      {/* Nav */}
-      <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+      <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
         {navItems.map(item => (
           <NavLink
             key={item.to}
@@ -91,8 +115,8 @@ export default function AppSidebar() {
             onClick={() => setMobileOpen(false)}
             className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           >
-            <item.icon className="w-5 h-5 flex-shrink-0" />
-            <span>{item.label}</span>
+            <item.icon className="w-4 h-4 flex-shrink-0" />
+            <span className="text-sm">{item.label}</span>
           </NavLink>
         ))}
       </nav>
@@ -111,7 +135,6 @@ export default function AppSidebar() {
         {sidebar}
       </aside>
 
-      {/* Mobile: top bar instead of floating button to avoid text overlap */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-40 h-14 bg-card/95 backdrop-blur-sm border-b border-border flex items-center px-4">
         <button onClick={() => setMobileOpen(true)} className="p-2 -ml-2 rounded-lg hover:bg-muted">
           <Menu className="w-5 h-5" />
