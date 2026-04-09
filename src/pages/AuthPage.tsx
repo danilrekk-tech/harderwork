@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
-import { Shield, Users } from 'lucide-react';
+import { Shield, Users, Sparkles, TrendingUp, Trophy, Zap } from 'lucide-react';
 
 export default function AuthPage() {
   const { signIn, signUpAsLeader } = useAuth();
@@ -33,74 +33,120 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Background decorations */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-primary/5 blur-3xl" />
+        <div className="absolute -bottom-32 -left-32 w-[500px] h-[500px] rounded-full bg-accent/5 blur-3xl" />
+        <div className="absolute top-1/3 left-1/4 w-64 h-64 rounded-full bg-primary/3 blur-3xl" />
+      </div>
+
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md"
+        transition={{ duration: 0.5 }}
+        className="w-full max-w-md relative z-10"
       >
+        {/* Logo & Branding */}
         <div className="text-center mb-8">
-          <h1 className="font-display text-3xl font-bold text-foreground">SalesForce</h1>
-          <p className="text-muted-foreground mt-1">Система управления продажами</p>
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.1, type: 'spring', stiffness: 200 }}
+            className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 mb-4"
+          >
+            <Sparkles className="w-8 h-8 text-primary" />
+          </motion.div>
+          <h1 className="font-display text-3xl font-bold text-foreground tracking-tight">MegaGroup Team</h1>
+          <p className="text-muted-foreground mt-1.5 text-sm">Платформа геймификации продаж</p>
         </div>
 
-        <div className="widget-card">
+        {/* Features strip */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="flex justify-center gap-6 mb-6"
+        >
+          {[
+            { icon: TrendingUp, label: 'Аналитика' },
+            { icon: Trophy, label: 'Достижения' },
+            { icon: Zap, label: 'Геймификация' },
+          ].map((feat, i) => (
+            <div key={i} className="flex flex-col items-center gap-1">
+              <div className="w-9 h-9 rounded-xl bg-primary/8 flex items-center justify-center">
+                <feat.icon className="w-4 h-4 text-primary" />
+              </div>
+              <span className="text-[10px] text-muted-foreground font-medium">{feat.label}</span>
+            </div>
+          ))}
+        </motion.div>
+
+        <div className="widget-card premium-glow">
           <Tabs value={tab} onValueChange={setTab}>
-            <TabsList className="w-full mb-6">
-              <TabsTrigger value="login" className="flex-1">Вход</TabsTrigger>
-              <TabsTrigger value="register" className="flex-1">Регистрация руководителя</TabsTrigger>
+            <TabsList className="w-full mb-6 h-11">
+              <TabsTrigger value="login" className="flex-1 text-sm">Вход</TabsTrigger>
+              <TabsTrigger value="register" className="flex-1 text-sm">Регистрация</TabsTrigger>
             </TabsList>
 
             <TabsContent value="login">
               <form onSubmit={handleLogin} className="space-y-4">
-                <div>
-                  <Label>Email</Label>
-                  <Input type="email" required value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
+                <div className="space-y-1.5">
+                  <Label className="text-sm font-medium">Email</Label>
+                  <Input type="email" required value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="your@email.com" className="h-11" />
                 </div>
-                <div>
-                  <Label>Пароль</Label>
-                  <Input type="password" required minLength={6} value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} />
+                <div className="space-y-1.5">
+                  <Label className="text-sm font-medium">Пароль</Label>
+                  <Input type="password" required minLength={6} value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} placeholder="••••••••" className="h-11" />
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? 'Вход...' : 'Войти'}
+                <Button type="submit" className="w-full h-11 text-sm font-semibold" disabled={loading}>
+                  {loading ? (
+                    <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }} className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full" />
+                  ) : 'Войти'}
                 </Button>
               </form>
             </TabsContent>
 
             <TabsContent value="register">
               <form onSubmit={handleRegisterLeader} className="space-y-4">
-                <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20 mb-4">
+                <div className="flex items-center gap-2.5 p-3 rounded-lg bg-primary/5 border border-primary/15">
                   <Shield className="w-5 h-5 text-primary flex-shrink-0" />
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-muted-foreground leading-relaxed">
                     Регистрация руководителя отдела продаж. Менеджеры регистрируются по инвайт-ссылке.
                   </p>
                 </div>
-                <div>
-                  <Label>Имя</Label>
-                  <Input required value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
+                <div className="space-y-1.5">
+                  <Label className="text-sm font-medium">Имя</Label>
+                  <Input required value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Ваше имя" className="h-11" />
                 </div>
-                <div>
-                  <Label>Email</Label>
-                  <Input type="email" required value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
+                <div className="space-y-1.5">
+                  <Label className="text-sm font-medium">Email</Label>
+                  <Input type="email" required value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="your@email.com" className="h-11" />
                 </div>
-                <div>
-                  <Label>Пароль</Label>
-                  <Input type="password" required minLength={6} value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} />
+                <div className="space-y-1.5">
+                  <Label className="text-sm font-medium">Пароль</Label>
+                  <Input type="password" required minLength={6} value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} placeholder="Мин. 6 символов" className="h-11" />
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? 'Регистрация...' : 'Зарегистрироваться'}
+                <Button type="submit" className="w-full h-11 text-sm font-semibold" disabled={loading}>
+                  {loading ? (
+                    <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }} className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full" />
+                  ) : 'Зарегистрироваться'}
                 </Button>
               </form>
             </TabsContent>
           </Tabs>
 
           <div className="mt-6 pt-4 border-t border-border">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Users className="w-4 h-4" />
+            <div className="flex items-center gap-2.5 text-xs text-muted-foreground">
+              <Users className="w-4 h-4 flex-shrink-0" />
               <span>Менеджеры регистрируются по ссылке-приглашению от руководителя</span>
             </div>
           </div>
         </div>
+
+        <p className="text-center text-[11px] text-muted-foreground/60 mt-6">
+          © {new Date().getFullYear()} MegaGroup Team. Все права защищены.
+        </p>
       </motion.div>
     </div>
   );

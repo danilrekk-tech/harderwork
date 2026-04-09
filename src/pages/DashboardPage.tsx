@@ -21,7 +21,7 @@ import SalesMomentumWidget from '@/components/widgets/SalesMomentumWidget';
 import { DndContext, closestCenter, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Plus, X } from 'lucide-react';
+import { GripVertical, Plus, X, Settings2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import type { WidgetType, WidgetConfig } from '@/types';
@@ -66,30 +66,32 @@ const WIDGET_NAMES: Record<WidgetType, string> = {
   sales_momentum: 'Sales Momentum',
 };
 
+const SQUARE_WIDGETS: WidgetType[] = ['shift_timer', 'motivation', 'work_days_left', 'xp_progress'];
+
 function SortableWidget({ widget, onRemove, editMode }: { widget: WidgetConfig; onRemove: (id: string) => void; editMode: boolean }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: widget.id });
   const style = { transform: CSS.Transform.toString(transform), transition };
   const Component = WIDGET_COMPONENTS[widget.type];
-
+  const isSquare = SQUARE_WIDGETS.includes(widget.type);
   const sizeClass = widget.size === 'large' ? 'md:col-span-2' : '';
 
   return (
     <motion.div
       ref={setNodeRef}
       style={style}
-      className={`${sizeClass} relative`}
-      initial={{ opacity: 0, y: 20 }}
+      className={`${sizeClass} relative group`}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <div className="widget-card h-full">
+      <div className={`widget-card h-full ${isSquare ? 'aspect-square flex flex-col justify-center' : ''}`}>
         {editMode && (
-          <div className="absolute top-2 right-2 flex gap-1 z-10">
-            <button {...attributes} {...listeners} className="drag-handle p-1 rounded hover:bg-muted">
-              <GripVertical className="w-4 h-4 text-muted-foreground" />
+          <div className="absolute top-2 right-2 flex gap-1 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button {...attributes} {...listeners} className="drag-handle p-1.5 rounded-lg bg-muted/80 hover:bg-muted transition-colors">
+              <GripVertical className="w-3.5 h-3.5 text-muted-foreground" />
             </button>
-            <button onClick={() => onRemove(widget.id)} className="p-1 rounded hover:bg-destructive/10">
-              <X className="w-4 h-4 text-destructive" />
+            <button onClick={() => onRemove(widget.id)} className="p-1.5 rounded-lg bg-destructive/10 hover:bg-destructive/20 transition-colors">
+              <X className="w-3.5 h-3.5 text-destructive" />
             </button>
           </div>
         )}
@@ -139,17 +141,26 @@ export default function DashboardPage() {
 
   return (
     <div className="max-w-6xl mx-auto">
-      <div className="flex items-center justify-between mb-4">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-5">
         <div>
           <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">Dashboard</h1>
-          <div className="flex items-center gap-3 mt-1">
-            <span className="level-badge">Ур. {state.profile.level}</span>
-            <span className="text-sm text-muted-foreground">{state.profile.name}</span>
-            <span className="text-sm text-accent font-semibold">{xpBalance} XP</span>
-            {state.profile.streakDays > 0 && <span className="text-sm">🔥 {state.profile.streakDays} дн.</span>}
+          <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+            <span className="level-badge text-xs">Ур. {state.profile.level}</span>
+            <span className="text-sm text-muted-foreground font-medium">{state.profile.name}</span>
+            <span className="text-sm text-accent font-bold">{xpBalance} XP</span>
+            {state.profile.streakDays > 0 && (
+              <span className="text-sm font-medium bg-primary/8 text-primary px-2 py-0.5 rounded-full">🔥 {state.profile.streakDays} дн.</span>
+            )}
           </div>
         </div>
-        <Button variant={editMode ? "default" : "outline"} size="sm" onClick={() => setEditMode(!editMode)}>
+        <Button
+          variant={editMode ? "default" : "outline"}
+          size="sm"
+          onClick={() => setEditMode(!editMode)}
+          className="gap-1.5"
+        >
+          <Settings2 className="w-4 h-4" />
           {editMode ? 'Готово' : 'Настроить'}
         </Button>
       </div>
@@ -157,12 +168,15 @@ export default function DashboardPage() {
       <QuickActions />
 
       {editMode && hiddenTypes.length > 0 && (
-        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="mb-4 flex flex-wrap gap-2">
-          {hiddenTypes.map(type => (
-            <Button key={type} variant="outline" size="sm" onClick={() => addWidget(type)}>
-              <Plus className="w-3 h-3 mr-1" /> {WIDGET_NAMES[type]}
-            </Button>
-          ))}
+        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="mb-4 p-3 rounded-xl bg-muted/50 border border-border">
+          <p className="text-xs text-muted-foreground mb-2 font-medium">Добавить виджет:</p>
+          <div className="flex flex-wrap gap-2">
+            {hiddenTypes.map(type => (
+              <Button key={type} variant="outline" size="sm" onClick={() => addWidget(type)} className="h-8 text-xs">
+                <Plus className="w-3 h-3 mr-1" /> {WIDGET_NAMES[type]}
+              </Button>
+            ))}
+          </div>
         </motion.div>
       )}
 
