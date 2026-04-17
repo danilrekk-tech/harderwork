@@ -107,6 +107,158 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_conversations: {
+        Row: {
+          context_type: string
+          created_at: string
+          id: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          context_type?: string
+          created_at?: string
+          id?: string
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          context_type?: string
+          created_at?: string
+          id?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ai_messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          role: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          role: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "ai_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      app_settings: {
+        Row: {
+          id: string
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          id?: string
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Update: {
+          id?: string
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
+      audit_log: {
+        Row: {
+          action: string
+          actor_id: string
+          actor_name: string
+          created_at: string
+          details: Json | null
+          entity_id: string | null
+          entity_type: string
+          id: string
+        }
+        Insert: {
+          action: string
+          actor_id: string
+          actor_name?: string
+          created_at?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string
+          actor_name?: string
+          created_at?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      automation_rules: {
+        Row: {
+          action_config: Json
+          action_type: string
+          created_at: string
+          created_by: string
+          id: string
+          is_active: boolean
+          name: string
+          trigger_config: Json
+          trigger_type: string
+        }
+        Insert: {
+          action_config?: Json
+          action_type: string
+          created_at?: string
+          created_by: string
+          id?: string
+          is_active?: boolean
+          name: string
+          trigger_config?: Json
+          trigger_type: string
+        }
+        Update: {
+          action_config?: Json
+          action_type?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          trigger_config?: Json
+          trigger_type?: string
+        }
+        Relationships: []
+      }
       bonus_activities: {
         Row: {
           created_at: string
@@ -182,18 +334,54 @@ export type Database = {
         }
         Relationships: []
       }
+      client_notes: {
+        Row: {
+          body: string
+          client_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          client_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          client_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_notes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           company: string
           created_at: string
           deal_status: Database["public"]["Enums"]["deal_status"]
           email: string
+          expected_close_date: string | null
           id: string
           invoice_amount: number
           name: string
           notes: string
           phone: string
           product: string
+          stage_id: string | null
+          tags: string[] | null
+          temperature: string | null
           updated_at: string
           user_id: string
         }
@@ -202,12 +390,16 @@ export type Database = {
           created_at?: string
           deal_status?: Database["public"]["Enums"]["deal_status"]
           email?: string
+          expected_close_date?: string | null
           id?: string
           invoice_amount?: number
           name?: string
           notes?: string
           phone?: string
           product?: string
+          stage_id?: string | null
+          tags?: string[] | null
+          temperature?: string | null
           updated_at?: string
           user_id: string
         }
@@ -216,16 +408,28 @@ export type Database = {
           created_at?: string
           deal_status?: Database["public"]["Enums"]["deal_status"]
           email?: string
+          expected_close_date?: string | null
           id?: string
           invoice_amount?: number
           name?: string
           notes?: string
           phone?: string
           product?: string
+          stage_id?: string | null
+          tags?: string[] | null
+          temperature?: string | null
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "clients_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "deal_stages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       contests: {
         Row: {
@@ -317,6 +521,57 @@ export type Database = {
         }
         Relationships: []
       }
+      deal_stages: {
+        Row: {
+          color: string
+          created_at: string
+          id: string
+          name: string
+          position: number
+          user_id: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          id?: string
+          name: string
+          position?: number
+          user_id: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          id?: string
+          name?: string
+          position?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      fortune_wheel_spins: {
+        Row: {
+          id: string
+          reward_label: string
+          reward_xp: number
+          spun_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          reward_label?: string
+          reward_xp?: number
+          spun_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          reward_label?: string
+          reward_xp?: number
+          spun_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       invites: {
         Row: {
           code: string
@@ -384,6 +639,170 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      manager_group_members: {
+        Row: {
+          group_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          group_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          group_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "manager_group_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "manager_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      manager_groups: {
+        Row: {
+          color: string | null
+          created_at: string
+          created_by: string
+          id: string
+          name: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          name: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      manager_kpi: {
+        Row: {
+          id: string
+          monthly_clients_target: number
+          monthly_invoices_target: number
+          monthly_revenue_target: number
+          set_by: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          monthly_clients_target?: number
+          monthly_invoices_target?: number
+          monthly_revenue_target?: number
+          set_by?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          monthly_clients_target?: number
+          monthly_invoices_target?: number
+          monthly_revenue_target?: number
+          set_by?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      mystery_boxes: {
+        Row: {
+          id: string
+          opened_at: string
+          reward_type: string
+          reward_value: Json
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          opened_at?: string
+          reward_type: string
+          reward_value?: Json
+          user_id: string
+        }
+        Update: {
+          id?: string
+          opened_at?: string
+          reward_type?: string
+          reward_value?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          link: string | null
+          read_at: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          body?: string
+          created_at?: string
+          id?: string
+          link?: string | null
+          read_at?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          link?: string | null
+          read_at?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      one_on_one_notes: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          leader_id: string
+          manager_id: string
+          meeting_date: string | null
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          leader_id: string
+          manager_id: string
+          meeting_date?: string | null
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          leader_id?: string
+          manager_id?: string
+          meeting_date?: string | null
+        }
+        Relationships: []
       }
       penalties: {
         Row: {
