@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, FileText, Users, Calendar, Trophy, BarChart3, ShoppingBag, Settings,
   Menu, X, LogOut, Zap, Target, Award, Brain, Crosshair, ListChecks, Medal, AlertTriangle,
-  Backpack, ScrollText, UserCircle, Gavel, ClipboardList, Crown, CalendarRange,
+  Backpack, Bell, ScrollText, UserCircle, Gavel, ClipboardList, Crown, CalendarRange,
   Package, Send, FileBarChart, BookOpen, Activity, ShoppingCart, Sparkles, Kanban, Gift, Disc3, Shield
 } from 'lucide-react';
 import NotificationsBell from '@/components/NotificationsBell';
