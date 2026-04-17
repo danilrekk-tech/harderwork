@@ -114,19 +114,27 @@ export default function AppSidebar() {
         )}
       </div>
 
-      <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
-        {navItems.map(item => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            end={item.to === '/'}
-            onClick={() => setMobileOpen(false)}
-            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-          >
-            <item.icon className="w-4 h-4 flex-shrink-0" />
-            <span className="text-sm">{item.label}</span>
-          </NavLink>
-        ))}
+      <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto scrollbar-thin">
+        {navItems.map((item, idx) => {
+          const prevSection = idx > 0 ? (navItems[idx - 1] as any).section : null;
+          const showHeader = (item as any).section && (item as any).section !== prevSection;
+          return (
+            <div key={item.to}>
+              {showHeader && (
+                <div className="section-label px-3 pt-3 pb-1.5">{(item as any).section}</div>
+              )}
+              <NavLink
+                to={item.to}
+                end={item.to === '/'}
+                onClick={() => setMobileOpen(false)}
+                className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+              >
+                <item.icon className="w-4 h-4 flex-shrink-0" />
+                <span className="text-sm">{item.label}</span>
+              </NavLink>
+            </div>
+          );
+        })}
       </nav>
 
       <div className="p-4 border-t border-sidebar-border">
@@ -143,11 +151,12 @@ export default function AppSidebar() {
         {sidebar}
       </aside>
 
-      <div className="md:hidden fixed top-0 left-0 right-0 z-40 h-14 bg-card/95 backdrop-blur-sm border-b border-border flex items-center px-4">
+      <div className="md:hidden fixed top-0 left-0 right-0 z-40 h-14 glass border-b border-border flex items-center px-4">
         <button onClick={() => setMobileOpen(true)} className="p-2 -ml-2 rounded-lg hover:bg-muted">
           <Menu className="w-5 h-5" />
         </button>
-        <span className="font-display font-bold text-foreground ml-2">MegaGroup Team</span>
+        <span className="font-display font-bold text-foreground ml-2 flex-1">MegaGroup Team</span>
+        <NotificationsBell />
       </div>
 
       <AnimatePresence>
