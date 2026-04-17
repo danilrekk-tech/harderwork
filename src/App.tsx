@@ -52,6 +52,16 @@ import DisciplinePage from "@/pages/DisciplinePage";
 import TeamActivityPage from "@/pages/TeamActivityPage";
 import ReportsPage from "@/pages/ReportsPage";
 import ShopAnalyticsPage from "@/pages/ShopAnalyticsPage";
+import AdminPage from "@/pages/AdminPage";
+
+// New Opus 4.7 features
+import AIAssistantPage from "@/pages/AIAssistantPage";
+import MysteryBoxPage from "@/pages/MysteryBoxPage";
+import FortuneWheelPage from "@/pages/FortuneWheelPage";
+import DealFunnelPage from "@/pages/DealFunnelPage";
+import AIInsightsPage from "@/pages/AIInsightsPage";
+import TeamKPIPage from "@/pages/TeamKPIPage";
+import AutomationPage from "@/pages/AutomationPage";
 
 const queryClient = new QueryClient();
 
@@ -113,8 +123,16 @@ function AppRoutes() {
         <Route path="/my-penalties" element={<ManagerRoute><MyPenaltiesPage /></ManagerRoute>} />
         <Route path="/event-log" element={<ManagerRoute><EventLogPage /></ManagerRoute>} />
         <Route path="/profile" element={<ManagerRoute><ProfilePage /></ManagerRoute>} />
+        <Route path="/ai-assistant" element={<ManagerRoute><AIAssistantPage /></ManagerRoute>} />
+        <Route path="/funnel" element={<ManagerRoute><DealFunnelPage /></ManagerRoute>} />
+        <Route path="/mystery-box" element={<ManagerRoute><MysteryBoxPage /></ManagerRoute>} />
+        <Route path="/fortune-wheel" element={<ManagerRoute><FortuneWheelPage /></ManagerRoute>} />
 
         {/* Leader-only routes */}
+        <Route path="/admin" element={<LeaderRoute><AdminPage /></LeaderRoute>} />
+        <Route path="/ai-insights" element={<LeaderRoute><AIInsightsPage /></LeaderRoute>} />
+        <Route path="/team-kpi" element={<LeaderRoute><TeamKPIPage /></LeaderRoute>} />
+        <Route path="/automation" element={<LeaderRoute><AutomationPage /></LeaderRoute>} />
         <Route path="/managers" element={<LeaderRoute><ManagersPage /></LeaderRoute>} />
         <Route path="/analytics" element={<LeaderRoute><AnalyticsPage /></LeaderRoute>} />
         <Route path="/all-invoices" element={<LeaderRoute><AllInvoicesPage /></LeaderRoute>} />
