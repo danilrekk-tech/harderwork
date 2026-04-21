@@ -7,6 +7,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { Shield, Users, Sparkles, TrendingUp, Trophy, Zap } from 'lucide-react';
+import heroAuth from '@/assets/hero-auth.jpg';
+import crystals from '@/assets/crystals.png';
 
 export default function AuthPage() {
   const { signIn, signUpAsLeader } = useAuth();
