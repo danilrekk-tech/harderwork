@@ -8,8 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Copy, Link, Trash2, Moon, Sun, Package, Settings, Palette, Clock, BookOpen, UserCircle } from 'lucide-react';
+import { Copy, Link, Trash2, Moon, Sun, Package, Settings, Palette, Clock, BookOpen, UserCircle, Monitor } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useTheme } from '@/contexts/ThemeContext';
 
 const DAY_LABELS = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
 
@@ -32,9 +33,9 @@ interface OwnedBoost {
 export default function SettingsPage() {
   const { state, updateState } = useApp();
   const { role, user, profileName } = useAuth();
+  const { theme, setTheme } = useTheme();
   const [invites, setInvites] = useState<Invite[]>([]);
   const [loadingInvite, setLoadingInvite] = useState(false);
-  const [darkMode, setDarkMode] = useState(() => document.documentElement.classList.contains('dark'));
   const [planType, setPlanType] = useState('amount');
   const [planTarget, setPlanTarget] = useState(500000);
   const [planSaved, setPlanSaved] = useState(false);
@@ -70,11 +71,8 @@ export default function SettingsPage() {
     }
   }
 
-  function toggleDarkMode(enabled: boolean) {
-    setDarkMode(enabled);
-    document.documentElement.classList.toggle('dark', enabled);
-    localStorage.setItem('theme', enabled ? 'dark' : 'light');
-  }
+  // Theme handled via ThemeContext (light/dark/system)
+
 
   async function loadInvites() {
     const { data } = await supabase.from('invites').select('*').order('created_at', { ascending: false });
