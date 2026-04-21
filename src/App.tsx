@@ -65,34 +65,50 @@ import AutomationPage from "@/pages/AutomationPage";
 
 const queryClient = new QueryClient();
 
+function FullScreenLoader({ label = 'Загрузка...' }: { label?: string }) {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="flex flex-col items-center gap-3">
+        <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+        <div className="text-sm text-muted-foreground">{label}</div>
+      </div>
+    </div>
+  );
+}
+
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
-  if (loading) return <div className="min-h-screen flex items-center justify-center"><div className="text-muted-foreground">Загрузка...</div></div>;
+  const { user, loading, roleReady } = useAuth();
+  if (loading) return <FullScreenLoader />;
   if (!user) return <Navigate to="/auth" replace />;
+  // Wait for role to be resolved before rendering protected app to prevent flash/redirect loops
+  if (!roleReady) return <FullScreenLoader label="Проверяем доступ..." />;
   return <>{children}</>;
 }
 
 function LeaderRoute({ children }: { children: React.ReactNode }) {
-  const { role } = useAuth();
+  const { role, roleReady } = useAuth();
+  if (!roleReady) return <FullScreenLoader label="Проверяем доступ..." />;
   if (role !== 'leader') return <Navigate to="/" replace />;
   return <>{children}</>;
 }
 
 function ManagerRoute({ children }: { children: React.ReactNode }) {
-  const { role } = useAuth();
+  const { role, roleReady } = useAuth();
+  if (!roleReady) return <FullScreenLoader label="Проверяем доступ..." />;
   if (role === 'leader') return <Navigate to="/" replace />;
   return <>{children}</>;
 }
 
 function AuthRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
-  if (loading) return null;
+  if (loading) return <FullScreenLoader />;
   if (user) return <Navigate to="/" replace />;
   return <>{children}</>;
 }
 
 function RoleDashboard() {
-  const { role } = useAuth();
+  const { role, roleReady } = useAuth();
+  if (!roleReady) return <FullScreenLoader label="Проверяем доступ..." />;
   return role === 'leader' ? <LeaderDashboardPage /> : <DashboardPage />;
 }
 
