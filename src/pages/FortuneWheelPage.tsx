@@ -5,6 +5,7 @@ import { Disc3, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
+import crystals from '@/assets/crystals.png';
 
 const SECTORS = [
   { label: '+25 XP', xp: 25, color: 'hsl(120 78% 38%)' },

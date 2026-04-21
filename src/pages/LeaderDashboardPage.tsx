@@ -4,6 +4,8 @@ import { Card } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { motion } from 'framer-motion';
 import { TrendingUp, Users, FileText, Trophy, BarChart3, Target, ArrowUpRight, ArrowDownRight, Activity } from 'lucide-react';
+import leaderBanner from '@/assets/leader-banner.jpg';
+import trophy from '@/assets/trophy.png';
 
 interface ManagerSummary {
   user_id: string;
@@ -124,12 +126,17 @@ export default function LeaderDashboardPage() {
 
   return (
     <div className="max-w-6xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">🛡️ Панель руководителя</h1>
-        <div className="flex items-center gap-2 mt-1.5">
-          <span className="text-sm text-muted-foreground">{profileName || 'Руководитель'}</span>
-          <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-          <span className="text-xs text-primary font-medium">Онлайн</span>
+      <div className="relative rounded-2xl overflow-hidden mb-6 h-36 md:h-44">
+        <img src={leaderBanner} alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-cover" width={1920} height={1080} />
+        <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/80 to-background/40 dark:from-background/95 dark:via-background/85 dark:to-transparent" />
+        <img src={trophy} alt="" aria-hidden="true" className="absolute right-4 -bottom-2 w-32 h-32 md:w-40 md:h-40 hidden sm:block drop-shadow-[0_0_30px_hsl(var(--primary)/0.4)]" width={768} height={768} loading="lazy" />
+        <div className="relative h-full flex flex-col justify-center px-5 md:px-7">
+          <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">🛡️ Панель руководителя</h1>
+          <div className="flex items-center gap-2 mt-1.5">
+            <span className="text-sm text-muted-foreground">{profileName || 'Руководитель'}</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+            <span className="text-xs text-primary font-medium">Онлайн</span>
+          </div>
         </div>
       </div>
 
