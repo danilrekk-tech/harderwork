@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Brain, Loader2, TrendingUp, AlertTriangle, Lightbulb } from 'lucide-react';
 import { toast } from 'sonner';
 import ReactMarkdown from 'react-markdown';
+import aiOrb from '@/assets/ai-orb.png';
+import leaderBanner from '@/assets/leader-banner.jpg';
 
 export default function AIInsightsPage() {
   const [insights, setInsights] = useState('');
@@ -80,11 +82,15 @@ export default function AIInsightsPage() {
 
   return (
     <div className="max-w-5xl mx-auto">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 rounded-xl glass flex items-center justify-center"><Brain className="w-5 h-5 text-primary" /></div>
-        <div>
-          <h1 className="page-title">AI-аналитика команды</h1>
-          <p className="page-subtitle">Автоматические инсайты на основе ваших данных</p>
+      <div className="relative rounded-2xl overflow-hidden mb-6 h-32 md:h-40">
+        <img src={leaderBanner} alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-cover" width={1920} height={1080} />
+        <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/70 to-transparent" />
+        <div className="relative h-full flex items-center gap-4 px-6">
+          <img src={aiOrb} alt="" className="w-20 h-20 md:w-24 md:h-24 drop-shadow-[0_0_30px_hsl(var(--primary)/0.6)]" width={1024} height={1024} />
+          <div>
+            <h1 className="page-title">AI-аналитика команды</h1>
+            <p className="page-subtitle">Автоматические инсайты на основе ваших данных</p>
+          </div>
         </div>
       </div>
 
