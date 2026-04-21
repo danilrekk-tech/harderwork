@@ -70,7 +70,9 @@ export default function FortuneWheelPage() {
         </div>
       </div>
 
-      <Card className="glass p-8 text-center">
+      <Card className="glass p-8 text-center relative overflow-hidden">
+        <img src={crystals} alt="" aria-hidden="true" className="absolute -top-8 -left-8 w-32 h-32 opacity-20 pointer-events-none" width={768} height={768} loading="lazy" />
+        <img src={crystals} alt="" aria-hidden="true" className="absolute -bottom-8 -right-8 w-32 h-32 opacity-20 pointer-events-none rotate-180" width={768} height={768} loading="lazy" />
         <div className="relative w-72 h-72 mx-auto mb-8">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 z-10">
             <div className="w-0 h-0 border-l-[12px] border-r-[12px] border-t-[20px] border-l-transparent border-r-transparent border-t-primary drop-shadow-md" />
