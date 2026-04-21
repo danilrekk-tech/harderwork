@@ -171,15 +171,30 @@ export default function SettingsPage() {
             <Palette className="w-5 h-5 text-primary" />
             <h2 className="font-display font-semibold text-foreground">Оформление</h2>
           </div>
-          <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
-            <div className="flex items-center gap-3">
-              {darkMode ? <Moon className="w-5 h-5 text-muted-foreground" /> : <Sun className="w-5 h-5 text-accent" />}
-              <div>
-                <div className="text-sm font-medium text-foreground">{darkMode ? 'Тёмная тема' : 'Светлая тема'}</div>
-                <div className="text-[11px] text-muted-foreground">Переключить оформление</div>
-              </div>
-            </div>
-            <Switch checked={darkMode} onCheckedChange={toggleDarkMode} />
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { value: 'light', icon: Sun, label: 'Светлая' },
+              { value: 'dark', icon: Moon, label: 'Тёмная' },
+              { value: 'system', icon: Monitor, label: 'Системная' },
+            ].map(opt => {
+              const active = theme === opt.value;
+              const Icon = opt.icon;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setTheme(opt.value as any)}
+                  className={`flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all ${
+                    active
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border bg-muted/30 text-muted-foreground hover:border-primary/40 hover:text-foreground'
+                  }`}
+                >
+                  <Icon className="w-5 h-5" />
+                  <span className="text-xs font-medium">{opt.label}</span>
+                </button>
+              );
+            })}
           </div>
 
           {themeBoosts.length > 0 && (
