@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Sparkles, Send, Bot, User, Loader2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { toast } from 'sonner';
+import aiOrb from '@/assets/ai-orb.png';
 
 type Msg = { role: 'user' | 'assistant'; content: string };
 
@@ -100,8 +101,14 @@ export default function AIAssistantPage() {
       <Card className="glass flex-1 flex flex-col overflow-hidden rounded-2xl">
         <div className="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-thin">
           {messages.length === 0 && (
-            <div className="text-center py-8">
-              <Bot className="w-16 h-16 mx-auto mb-4 text-primary/40" />
+            <div className="text-center py-8 relative">
+              <img
+                src={aiOrb}
+                alt="AI"
+                className="w-40 h-40 mx-auto mb-2 drop-shadow-[0_0_40px_hsl(var(--primary)/0.5)] animate-pulse"
+                width={1024}
+                height={1024}
+              />
               <p className="text-muted-foreground mb-4">Начните диалог или выберите подсказку:</p>
               <div className="grid gap-2 max-w-md mx-auto">
                 {STARTERS.map(s => (

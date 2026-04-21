@@ -7,6 +7,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { Shield, Users, Sparkles, TrendingUp, Trophy, Zap } from 'lucide-react';
+import heroAuth from '@/assets/hero-auth.jpg';
+import crystals from '@/assets/crystals.png';
 
 export default function AuthPage() {
   const { signIn, signUpAsLeader } = useAuth();
@@ -34,11 +36,26 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Background decorations */}
+      {/* Background decorations with hero image */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-primary/5 blur-3xl" />
-        <div className="absolute -bottom-32 -left-32 w-[500px] h-[500px] rounded-full bg-accent/5 blur-3xl" />
-        <div className="absolute top-1/3 left-1/4 w-64 h-64 rounded-full bg-primary/3 blur-3xl" />
+        <img
+          src={heroAuth}
+          alt=""
+          aria-hidden="true"
+          className="absolute -top-40 -right-40 w-[700px] h-[700px] object-cover opacity-40 dark:opacity-25 blur-2xl"
+          width={1280}
+          height={1280}
+        />
+        <div className="absolute -bottom-32 -left-32 w-[500px] h-[500px] rounded-full bg-accent/10 blur-3xl" />
+        <img
+          src={crystals}
+          alt=""
+          aria-hidden="true"
+          className="absolute bottom-10 right-10 w-32 h-32 opacity-30 hidden md:block"
+          width={768}
+          height={768}
+          loading="lazy"
+        />
       </div>
 
       <motion.div

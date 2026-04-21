@@ -5,6 +5,7 @@ import { Gift, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { motion, AnimatePresence } from 'framer-motion';
+import mysteryBoxImg from '@/assets/mystery-box.png';
 
 const REWARDS = [
   { type: 'xp', label: '+50 XP', value: 50, weight: 30 },
@@ -78,23 +79,32 @@ export default function MysteryBoxPage() {
         </div>
       </div>
 
-      <Card className="glass p-12 text-center mb-6">
+      <Card className="glass p-12 text-center mb-6 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5 pointer-events-none" />
         <AnimatePresence mode="wait">
           {opening ? (
-            <motion.div key="open" initial={{ scale: 1 }} animate={{ scale: [1, 1.2, 0.8, 1.3, 1], rotate: [0, -10, 10, -5, 0] }} transition={{ duration: 1.5 }}>
-              <Gift className="w-32 h-32 mx-auto text-primary" />
+            <motion.div key="open" initial={{ scale: 1 }} animate={{ scale: [1, 1.15, 0.9, 1.2, 1], rotate: [0, -8, 8, -4, 0] }} transition={{ duration: 1.5 }} className="relative">
+              <img src={mysteryBoxImg} alt="" className="w-48 h-48 mx-auto drop-shadow-[0_0_40px_hsl(var(--primary)/0.6)]" width={1024} height={1024} />
               <p className="mt-4 text-lg font-semibold">Открываем...</p>
             </motion.div>
           ) : reward ? (
-            <motion.div key="reward" initial={{ scale: 0, rotate: -180 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: 'spring' }}>
-              <Sparkles className="w-32 h-32 mx-auto text-primary mb-4" />
+            <motion.div key="reward" initial={{ scale: 0, rotate: -180 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: 'spring' }} className="relative">
+              <Sparkles className="w-32 h-32 mx-auto text-primary mb-4 animate-pulse" />
               <p className="text-3xl font-display font-bold text-gradient mb-2">{reward.label}</p>
               <p className="text-muted-foreground">Поздравляем!</p>
             </motion.div>
           ) : (
-            <motion.div key="closed">
-              <Gift className="w-32 h-32 mx-auto text-primary/60 mb-4" />
-              <p className="text-muted-foreground mb-6">Осталось коробок сегодня: <span className="font-bold text-foreground">{3 - todayCount} из 3</span></p>
+            <motion.div key="closed" className="relative">
+              <motion.img
+                src={mysteryBoxImg}
+                alt="Mystery Box"
+                className="w-48 h-48 mx-auto drop-shadow-[0_0_30px_hsl(var(--primary)/0.4)]"
+                width={1024}
+                height={1024}
+                animate={{ y: [0, -8, 0] }}
+                transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+              />
+              <p className="text-muted-foreground mb-6 mt-2">Осталось коробок сегодня: <span className="font-bold text-foreground">{3 - todayCount} из 3</span></p>
               <Button onClick={open} disabled={todayCount >= 3} size="lg" className="quick-action-btn">
                 <Gift className="w-5 h-5" /> Открыть коробку
               </Button>
