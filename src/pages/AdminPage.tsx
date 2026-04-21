@@ -8,7 +8,8 @@ import AdminAuditLogTab from '@/components/admin/AdminAuditLogTab';
 import { Shield, Users, Send, Settings, ScrollText } from 'lucide-react';
 
 export default function AdminPage() {
-  const { role } = useAuth();
+  const { role, roleReady } = useAuth();
+  if (!roleReady) return null;
   if (role !== 'leader') return <Navigate to="/" replace />;
 
   return (
