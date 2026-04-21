@@ -25,6 +25,8 @@ import { GripVertical, Plus, X, Settings2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import type { WidgetType, WidgetConfig } from '@/types';
+import dashboardBanner from '@/assets/dashboard-banner.jpg';
+import crystals from '@/assets/crystals.png';
 
 const WIDGET_COMPONENTS: Record<WidgetType, React.FC> = {
   plan_progress: PlanProgressWidget,
@@ -141,28 +143,32 @@ export default function DashboardPage() {
 
   return (
     <div className="max-w-6xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-5">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">Dashboard</h1>
-          <div className="flex items-center gap-3 mt-1.5 flex-wrap">
-            <span className="level-badge text-xs">Ур. {state.profile.level}</span>
-            <span className="text-sm text-muted-foreground font-medium">{state.profile.name}</span>
-            <span className="text-sm text-accent font-bold">{xpBalance} XP</span>
-            {state.profile.streakDays > 0 && (
-              <span className="text-sm font-medium bg-primary/8 text-primary px-2 py-0.5 rounded-full">🔥 {state.profile.streakDays} дн.</span>
-            )}
+      {/* Hero header with banner */}
+      <div className="relative rounded-2xl overflow-hidden mb-5 h-36 md:h-44">
+        <img src={dashboardBanner} alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-cover" width={1920} height={1080} />
+        <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/70 to-transparent" />
+        <img src={crystals} alt="" aria-hidden="true" className="absolute -right-6 -bottom-6 w-32 h-32 md:w-44 md:h-44 opacity-80 hidden sm:block" width={768} height={768} loading="lazy" />
+        <div className="relative h-full flex items-center justify-between px-5 md:px-7">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">Привет, {state.profile.name}!</h1>
+            <div className="flex items-center gap-3 mt-2 flex-wrap">
+              <span className="level-badge text-xs">Ур. {state.profile.level}</span>
+              <span className="text-sm text-accent font-bold">{xpBalance} XP</span>
+              {state.profile.streakDays > 0 && (
+                <span className="text-sm font-medium bg-primary/10 backdrop-blur-sm text-primary px-2.5 py-0.5 rounded-full">🔥 {state.profile.streakDays} дн.</span>
+              )}
+            </div>
           </div>
+          <Button
+            variant={editMode ? "default" : "outline"}
+            size="sm"
+            onClick={() => setEditMode(!editMode)}
+            className="gap-1.5 backdrop-blur-sm"
+          >
+            <Settings2 className="w-4 h-4" />
+            {editMode ? 'Готово' : 'Настроить'}
+          </Button>
         </div>
-        <Button
-          variant={editMode ? "default" : "outline"}
-          size="sm"
-          onClick={() => setEditMode(!editMode)}
-          className="gap-1.5"
-        >
-          <Settings2 className="w-4 h-4" />
-          {editMode ? 'Готово' : 'Настроить'}
-        </Button>
       </div>
 
       <QuickActions />
