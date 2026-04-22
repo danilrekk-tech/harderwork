@@ -3,7 +3,8 @@ import {
   LayoutDashboard, FileText, Users, Calendar, Trophy, BarChart3, ShoppingBag, Settings,
   Menu, X, LogOut, Zap, Target, Award, Brain, Crosshair, ListChecks, Medal, AlertTriangle,
   Backpack, Bell, ScrollText, UserCircle, Gavel, ClipboardList, Crown, CalendarRange,
-  Package, Send, FileBarChart, BookOpen, Activity, ShoppingCart, Sparkles, Kanban, Gift, Disc3, Shield
+  Package, Send, FileBarChart, BookOpen, Activity, ShoppingCart, Sparkles, Kanban, Gift, Disc3, Shield,
+  PawPrint, Swords, MessageSquare, Heart, Lightbulb, Mic, TrendingUp, PhoneCall, MessageCircle, StickyNote, Timer, Megaphone, FileDown
 } from 'lucide-react';
 import NotificationsBell from '@/components/NotificationsBell';
 import { useState } from 'react';
