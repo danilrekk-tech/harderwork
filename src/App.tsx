@@ -143,6 +143,29 @@ function AppRoutes() {
         <Route path="/funnel" element={<ManagerRoute><DealFunnelPage /></ManagerRoute>} />
         <Route path="/mystery-box" element={<ManagerRoute><MysteryBoxPage /></ManagerRoute>} />
         <Route path="/fortune-wheel" element={<ManagerRoute><FortuneWheelPage /></ManagerRoute>} />
+        <Route path="/quests" element={<ProtectedRoute><QuestsPage /></ProtectedRoute>} />
+        <Route path="/daily-reward" element={<ManagerRoute><DailyRewardPage /></ManagerRoute>} />
+        <Route path="/pet" element={<ManagerRoute><PetPage /></ManagerRoute>} />
+        <Route path="/duels" element={<ManagerRoute><DuelsPage /></ManagerRoute>} />
+        <Route path="/leagues" element={<ProtectedRoute><LeaguesPage /></ProtectedRoute>} />
+        <Route path="/season-pass" element={<ManagerRoute><SeasonPassPage /></ManagerRoute>} />
+        <Route path="/lead-scoring" element={<ManagerRoute><LeadScoringPage /></ManagerRoute>} />
+        <Route path="/ai-coach" element={<ManagerRoute><AICoachPage /></ManagerRoute>} />
+        <Route path="/voice-notes" element={<ManagerRoute><VoiceNotesPage /></ManagerRoute>} />
+        <Route path="/call-analyzer" element={<ManagerRoute><CallAnalyzerPage /></ManagerRoute>} />
+        <Route path="/team-chat" element={<ProtectedRoute><TeamChatPage /></ProtectedRoute>} />
+        <Route path="/kudos" element={<ProtectedRoute><KudosPage /></ProtectedRoute>} />
+        <Route path="/ideas" element={<ProtectedRoute><IdeasPage /></ProtectedRoute>} />
+        <Route path="/polls" element={<ProtectedRoute><PollsPage /></ProtectedRoute>} />
+        <Route path="/okr" element={<ProtectedRoute><OKRPage /></ProtectedRoute>} />
+        <Route path="/templates" element={<ManagerRoute><MessageTemplatesPage /></ManagerRoute>} />
+        <Route path="/sticky-notes" element={<ManagerRoute><StickyNotesPage /></ManagerRoute>} />
+        <Route path="/checklists" element={<ManagerRoute><ChecklistsPage /></ManagerRoute>} />
+        <Route path="/pomodoro" element={<ManagerRoute><PomodoroProPage /></ManagerRoute>} />
+        <Route path="/call-timer" element={<ManagerRoute><CallTimerPage /></ManagerRoute>} />
+        <Route path="/forecast" element={<LeaderRoute><ForecastPage /></LeaderRoute>} />
+        <Route path="/broadcasts" element={<LeaderRoute><BroadcastsPage /></LeaderRoute>} />
+        <Route path="/reports-export" element={<LeaderRoute><ReportsExportPage /></LeaderRoute>} />
 
         {/* Leader-only routes */}
         <Route path="/admin" element={<LeaderRoute><AdminPage /></LeaderRoute>} />
