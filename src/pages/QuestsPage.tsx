@@ -36,7 +36,8 @@ export default function QuestsPage() {
     const cur = progress[qst.id];
     if (cur?.completed) return;
     await supabase.from('user_quests').upsert({ user_id: user.id, quest_id: qst.id, progress: qst.target_value, completed: true, completed_at: new Date().toISOString() }, { onConflict: 'user_id,quest_id' });
-    await supabase.rpc('increment_xp' as any, { _user_id: user.id, _amount: qst.xp_reward }).catch(() => {});
+    const { data: prof } = await supabase.from('profiles').select('xp, total_xp_earned').eq('user_id', user.id).single();
+    if (prof) await supabase.from('profiles').update({ xp: (prof.xp ?? 0) + qst.xp_reward, total_xp_earned: (prof.total_xp_earned ?? 0) + qst.xp_reward }).eq('user_id', user.id);
     toast.success(`+${qst.xp_reward} XP за квест!`);
     load();
   };
