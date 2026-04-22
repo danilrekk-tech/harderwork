@@ -48,6 +48,7 @@ export type Database = {
           description: string
           icon: string
           id: string
+          is_secret: boolean
           title: string
           xp_reward: number
         }
@@ -60,6 +61,7 @@ export type Database = {
           description?: string
           icon?: string
           id?: string
+          is_secret?: boolean
           title: string
           xp_reward?: number
         }
@@ -72,6 +74,7 @@ export type Database = {
           description?: string
           icon?: string
           id?: string
+          is_secret?: boolean
           title?: string
           xp_reward?: number
         }
@@ -130,6 +133,39 @@ export type Database = {
           id?: string
           title?: string
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ai_insights: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          insight_type: string
+          is_read: boolean
+          priority: number
+          title: string
+          user_id: string
+        }
+        Insert: {
+          body?: string
+          created_at?: string
+          id?: string
+          insight_type?: string
+          is_read?: boolean
+          priority?: number
+          title: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          insight_type?: string
+          is_read?: boolean
+          priority?: number
+          title?: string
           user_id?: string
         }
         Relationships: []
@@ -334,6 +370,174 @@ export type Database = {
         }
         Relationships: []
       }
+      broadcasts: {
+        Row: {
+          audience: string
+          body: string
+          created_at: string
+          id: string
+          recipients_count: number
+          sent_by: string
+          title: string
+        }
+        Insert: {
+          audience?: string
+          body?: string
+          created_at?: string
+          id?: string
+          recipients_count?: number
+          sent_by: string
+          title: string
+        }
+        Update: {
+          audience?: string
+          body?: string
+          created_at?: string
+          id?: string
+          recipients_count?: number
+          sent_by?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      call_logs: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          duration_seconds: number
+          id: string
+          notes: string
+          outcome: string
+          user_id: string
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          duration_seconds?: number
+          id?: string
+          notes?: string
+          outcome?: string
+          user_id: string
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          duration_seconds?: number
+          id?: string
+          notes?: string
+          outcome?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      chat_channels: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string
+          id: string
+          is_general: boolean
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string
+          id?: string
+          is_general?: boolean
+          name: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string
+          id?: string
+          is_general?: boolean
+          name?: string
+        }
+        Relationships: []
+      }
+      chat_messages: {
+        Row: {
+          channel_id: string
+          content: string
+          created_at: string
+          id: string
+          reply_to: string | null
+          user_id: string
+        }
+        Insert: {
+          channel_id: string
+          content: string
+          created_at?: string
+          id?: string
+          reply_to?: string | null
+          user_id: string
+        }
+        Update: {
+          channel_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          reply_to?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      checklist_items: {
+        Row: {
+          checklist_id: string
+          completed: boolean
+          created_at: string
+          id: string
+          position: number
+          text: string
+        }
+        Insert: {
+          checklist_id: string
+          completed?: boolean
+          created_at?: string
+          id?: string
+          position?: number
+          text: string
+        }
+        Update: {
+          checklist_id?: string
+          completed?: boolean
+          created_at?: string
+          id?: string
+          position?: number
+          text?: string
+        }
+        Relationships: []
+      }
+      checklists: {
+        Row: {
+          created_at: string
+          id: string
+          is_template: boolean
+          stage: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_template?: boolean
+          stage?: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_template?: boolean
+          stage?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       client_notes: {
         Row: {
           body: string
@@ -482,6 +686,33 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_rewards: {
+        Row: {
+          claimed_date: string
+          created_at: string
+          day_number: number
+          id: string
+          user_id: string
+          xp_reward: number
+        }
+        Insert: {
+          claimed_date: string
+          created_at?: string
+          day_number?: number
+          id?: string
+          user_id: string
+          xp_reward?: number
+        }
+        Update: {
+          claimed_date?: string
+          created_at?: string
+          day_number?: number
+          id?: string
+          user_id?: string
+          xp_reward?: number
+        }
+        Relationships: []
+      }
       daily_tasks: {
         Row: {
           completed: boolean
@@ -521,6 +752,33 @@ export type Database = {
         }
         Relationships: []
       }
+      day_summaries: {
+        Row: {
+          created_at: string
+          highlights: Json
+          id: string
+          summary: string
+          summary_date: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          highlights?: Json
+          id?: string
+          summary?: string
+          summary_date: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          highlights?: Json
+          id?: string
+          summary?: string
+          summary_date?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       deal_stages: {
         Row: {
           color: string
@@ -548,6 +806,54 @@ export type Database = {
         }
         Relationships: []
       }
+      duels: {
+        Row: {
+          challenger_id: string
+          challenger_score: number
+          created_at: string
+          ends_at: string
+          id: string
+          metric: string
+          opponent_id: string
+          opponent_score: number
+          stake_xp: number
+          started_at: string
+          status: string
+          target: number
+          winner_id: string | null
+        }
+        Insert: {
+          challenger_id: string
+          challenger_score?: number
+          created_at?: string
+          ends_at?: string
+          id?: string
+          metric?: string
+          opponent_id: string
+          opponent_score?: number
+          stake_xp?: number
+          started_at?: string
+          status?: string
+          target?: number
+          winner_id?: string | null
+        }
+        Update: {
+          challenger_id?: string
+          challenger_score?: number
+          created_at?: string
+          ends_at?: string
+          id?: string
+          metric?: string
+          opponent_id?: string
+          opponent_score?: number
+          stake_xp?: number
+          started_at?: string
+          status?: string
+          target?: number
+          winner_id?: string | null
+        }
+        Relationships: []
+      }
       fortune_wheel_spins: {
         Row: {
           id: string
@@ -568,6 +874,60 @@ export type Database = {
           reward_label?: string
           reward_xp?: number
           spun_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      idea_votes: {
+        Row: {
+          created_at: string
+          id: string
+          idea_id: string
+          user_id: string
+          vote: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          idea_id: string
+          user_id: string
+          vote?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          idea_id?: string
+          user_id?: string
+          vote?: number
+        }
+        Relationships: []
+      }
+      ideas: {
+        Row: {
+          category: string
+          created_at: string
+          description: string
+          id: string
+          status: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          status?: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          status?: string
+          title?: string
           user_id?: string
         }
         Relationships: []
@@ -639,6 +999,96 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      kudos: {
+        Row: {
+          created_at: string
+          emoji: string
+          from_user_id: string
+          id: string
+          message: string
+          to_user_id: string
+          xp_bonus: number
+        }
+        Insert: {
+          created_at?: string
+          emoji?: string
+          from_user_id: string
+          id?: string
+          message?: string
+          to_user_id: string
+          xp_bonus?: number
+        }
+        Update: {
+          created_at?: string
+          emoji?: string
+          from_user_id?: string
+          id?: string
+          message?: string
+          to_user_id?: string
+          xp_bonus?: number
+        }
+        Relationships: []
+      }
+      lead_scores: {
+        Row: {
+          client_id: string
+          id: string
+          next_action: string
+          reasoning: string
+          recommendation: string
+          score: number
+          scored_at: string
+          user_id: string
+        }
+        Insert: {
+          client_id: string
+          id?: string
+          next_action?: string
+          reasoning?: string
+          recommendation?: string
+          score?: number
+          scored_at?: string
+          user_id: string
+        }
+        Update: {
+          client_id?: string
+          id?: string
+          next_action?: string
+          reasoning?: string
+          recommendation?: string
+          score?: number
+          scored_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      leagues: {
+        Row: {
+          id: string
+          points: number
+          season_number: number
+          tier: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          points?: number
+          season_number?: number
+          tier?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          points?: number
+          season_number?: number
+          tier?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       manager_group_members: {
         Row: {
@@ -720,6 +1170,60 @@ export type Database = {
         }
         Relationships: []
       }
+      message_reactions: {
+        Row: {
+          created_at: string
+          emoji: string
+          id: string
+          message_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          emoji: string
+          id?: string
+          message_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          emoji?: string
+          id?: string
+          message_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      message_templates: {
+        Row: {
+          body: string
+          category: string
+          created_at: string
+          id: string
+          title: string
+          use_count: number
+          user_id: string
+        }
+        Insert: {
+          body?: string
+          category?: string
+          created_at?: string
+          id?: string
+          title: string
+          use_count?: number
+          user_id: string
+        }
+        Update: {
+          body?: string
+          category?: string
+          created_at?: string
+          id?: string
+          title?: string
+          use_count?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       mystery_boxes: {
         Row: {
           id: string
@@ -774,6 +1278,69 @@ export type Database = {
           title?: string
           type?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      okr_key_results: {
+        Row: {
+          created_at: string
+          current_value: number
+          id: string
+          okr_id: string
+          target_value: number
+          title: string
+          unit: string
+        }
+        Insert: {
+          created_at?: string
+          current_value?: number
+          id?: string
+          okr_id: string
+          target_value?: number
+          title: string
+          unit?: string
+        }
+        Update: {
+          created_at?: string
+          current_value?: number
+          id?: string
+          okr_id?: string
+          target_value?: number
+          title?: string
+          unit?: string
+        }
+        Relationships: []
+      }
+      okrs: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          objective: string
+          progress: number
+          quarter: string
+          scope: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          objective: string
+          progress?: number
+          quarter: string
+          scope?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          objective?: string
+          progress?: number
+          quarter?: string
+          scope?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -858,6 +1425,132 @@ export type Database = {
         }
         Relationships: []
       }
+      pets: {
+        Row: {
+          created_at: string
+          evolution_stage: number
+          happiness: number
+          hunger: number
+          id: string
+          last_fed_at: string
+          level: number
+          name: string
+          species: string
+          user_id: string
+          xp: number
+        }
+        Insert: {
+          created_at?: string
+          evolution_stage?: number
+          happiness?: number
+          hunger?: number
+          id?: string
+          last_fed_at?: string
+          level?: number
+          name?: string
+          species?: string
+          user_id: string
+          xp?: number
+        }
+        Update: {
+          created_at?: string
+          evolution_stage?: number
+          happiness?: number
+          hunger?: number
+          id?: string
+          last_fed_at?: string
+          level?: number
+          name?: string
+          species?: string
+          user_id?: string
+          xp?: number
+        }
+        Relationships: []
+      }
+      poll_votes: {
+        Row: {
+          created_at: string
+          id: string
+          option_index: number
+          poll_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          option_index: number
+          poll_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          option_index?: number
+          poll_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      polls: {
+        Row: {
+          closes_at: string | null
+          created_at: string
+          created_by: string
+          id: string
+          is_active: boolean
+          options: Json
+          question: string
+        }
+        Insert: {
+          closes_at?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          is_active?: boolean
+          options?: Json
+          question: string
+        }
+        Update: {
+          closes_at?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_active?: boolean
+          options?: Json
+          question?: string
+        }
+        Relationships: []
+      }
+      pomodoro_sessions: {
+        Row: {
+          completed: boolean
+          duration_minutes: number
+          ended_at: string | null
+          id: string
+          started_at: string
+          task_label: string
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean
+          duration_minutes?: number
+          ended_at?: string | null
+          id?: string
+          started_at?: string
+          task_label?: string
+          user_id: string
+        }
+        Update: {
+          completed?: boolean
+          duration_minutes?: number
+          ended_at?: string | null
+          id?: string
+          started_at?: string
+          task_label?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -909,6 +1602,48 @@ export type Database = {
         }
         Relationships: []
       }
+      quests: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string
+          icon: string
+          id: string
+          is_active: boolean
+          quest_type: string
+          target_metric: string
+          target_value: number
+          title: string
+          xp_reward: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          icon?: string
+          id?: string
+          is_active?: boolean
+          quest_type?: string
+          target_metric?: string
+          target_value?: number
+          title: string
+          xp_reward?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          icon?: string
+          id?: string
+          is_active?: boolean
+          quest_type?: string
+          target_metric?: string
+          target_value?: number
+          title?: string
+          xp_reward?: number
+        }
+        Relationships: []
+      }
       reminders: {
         Row: {
           amount: number | null
@@ -956,6 +1691,72 @@ export type Database = {
           },
         ]
       }
+      revenue_forecasts: {
+        Row: {
+          confidence: number
+          created_at: string
+          factors: Json
+          forecast_month: string
+          id: string
+          predicted_amount: number
+          scope: string
+          user_id: string | null
+        }
+        Insert: {
+          confidence?: number
+          created_at?: string
+          factors?: Json
+          forecast_month: string
+          id?: string
+          predicted_amount?: number
+          scope?: string
+          user_id?: string | null
+        }
+        Update: {
+          confidence?: number
+          created_at?: string
+          factors?: Json
+          forecast_month?: string
+          id?: string
+          predicted_amount?: number
+          scope?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      season_pass: {
+        Row: {
+          claimed_tiers: Json
+          current_tier: number
+          id: string
+          is_premium: boolean
+          season_number: number
+          updated_at: string
+          user_id: string
+          xp: number
+        }
+        Insert: {
+          claimed_tiers?: Json
+          current_tier?: number
+          id?: string
+          is_premium?: boolean
+          season_number?: number
+          updated_at?: string
+          user_id: string
+          xp?: number
+        }
+        Update: {
+          claimed_tiers?: Json
+          current_tier?: number
+          id?: string
+          is_premium?: boolean
+          season_number?: number
+          updated_at?: string
+          user_id?: string
+          xp?: number
+        }
+        Relationships: []
+      }
       seasons: {
         Row: {
           created_at: string
@@ -980,6 +1781,39 @@ export type Database = {
           is_active?: boolean
           number?: number
           start_date?: string
+        }
+        Relationships: []
+      }
+      sticky_notes: {
+        Row: {
+          color: string
+          content: string
+          created_at: string
+          id: string
+          pinned: boolean
+          position_x: number
+          position_y: number
+          user_id: string
+        }
+        Insert: {
+          color?: string
+          content?: string
+          created_at?: string
+          id?: string
+          pinned?: boolean
+          position_x?: number
+          position_y?: number
+          user_id: string
+        }
+        Update: {
+          color?: string
+          content?: string
+          created_at?: string
+          id?: string
+          pinned?: boolean
+          position_x?: number
+          position_y?: number
+          user_id?: string
         }
         Relationships: []
       }
@@ -1071,6 +1905,36 @@ export type Database = {
           },
         ]
       }
+      user_quests: {
+        Row: {
+          completed: boolean
+          completed_at: string | null
+          created_at: string
+          id: string
+          progress: number
+          quest_id: string
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          progress?: number
+          quest_id: string
+          user_id: string
+        }
+        Update: {
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          progress?: number
+          quest_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -1146,6 +2010,36 @@ export type Database = {
           updated_at?: string
           user_id?: string
           work_days?: Json
+        }
+        Relationships: []
+      }
+      voice_notes: {
+        Row: {
+          ai_summary: string
+          client_id: string | null
+          created_at: string
+          duration_seconds: number
+          id: string
+          transcript: string
+          user_id: string
+        }
+        Insert: {
+          ai_summary?: string
+          client_id?: string | null
+          created_at?: string
+          duration_seconds?: number
+          id?: string
+          transcript?: string
+          user_id: string
+        }
+        Update: {
+          ai_summary?: string
+          client_id?: string | null
+          created_at?: string
+          duration_seconds?: number
+          id?: string
+          transcript?: string
+          user_id?: string
         }
         Relationships: []
       }
