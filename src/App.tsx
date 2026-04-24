@@ -63,6 +63,31 @@ import AIInsightsPage from "@/pages/AIInsightsPage";
 import TeamKPIPage from "@/pages/TeamKPIPage";
 import AutomationPage from "@/pages/AutomationPage";
 
+// Opus 4.7 expansion pack
+import QuestsPage from "@/pages/QuestsPage";
+import DailyRewardPage from "@/pages/DailyRewardPage";
+import PetPage from "@/pages/PetPage";
+import DuelsPage from "@/pages/DuelsPage";
+import LeaguesPage from "@/pages/LeaguesPage";
+import SeasonPassPage from "@/pages/SeasonPassPage";
+import LeadScoringPage from "@/pages/LeadScoringPage";
+import AICoachPage from "@/pages/AICoachPage";
+import VoiceNotesPage from "@/pages/VoiceNotesPage";
+import CallAnalyzerPage from "@/pages/CallAnalyzerPage";
+import TeamChatPage from "@/pages/TeamChatPage";
+import KudosPage from "@/pages/KudosPage";
+import IdeasPage from "@/pages/IdeasPage";
+import PollsPage from "@/pages/PollsPage";
+import OKRPage from "@/pages/OKRPage";
+import MessageTemplatesPage from "@/pages/MessageTemplatesPage";
+import StickyNotesPage from "@/pages/StickyNotesPage";
+import ChecklistsPage from "@/pages/ChecklistsPage";
+import PomodoroProPage from "@/pages/PomodoroProPage";
+import CallTimerPage from "@/pages/CallTimerPage";
+import ForecastPage from "@/pages/ForecastPage";
+import BroadcastsPage from "@/pages/BroadcastsPage";
+import ReportsExportPage from "@/pages/ReportsExportPage";
+
 const queryClient = new QueryClient();
 
 function FullScreenLoader({ label = 'Загрузка...' }: { label?: string }) {
