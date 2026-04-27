@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, ChevronRight, Search, BookOpen, Zap, Trophy, Target, Users, BarChart3, ShoppingBag, Calendar, Timer, Flame, Star, Shield } from 'lucide-react';
+import { ChevronDown, ChevronRight, Search, BookOpen, Zap, Trophy, Target, Users, BarChart3, ShoppingBag, Calendar, Timer, Flame, Star, Shield, Map, Heart, Swords, Crown, Gift, Sparkles, Brain, MessageCircle, ThumbsUp, Lightbulb, Vote, Compass, Mic, Send, ScrollText, Bot, TrendingUp, ClipboardList, Coffee, Bell } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
 interface GuideSection {
