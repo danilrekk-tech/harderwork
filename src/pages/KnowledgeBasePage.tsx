@@ -488,13 +488,15 @@ export default function KnowledgeBasePage() {
 
   const filtered = GUIDE_SECTIONS.filter(s => {
     if (s.forRole === 'leader' && role !== 'leader') return false;
+    if (s.forRole === 'manager' && role === 'leader') return false;
     if (!search) return true;
     const q = search.toLowerCase();
     return s.title.toLowerCase().includes(q) || s.description.toLowerCase().includes(q)
       || s.steps.some(st => st.title.toLowerCase().includes(q) || st.content.toLowerCase().includes(q));
   });
 
-  const managerSections = filtered.filter(s => s.forRole === 'all');
+  const allSections = filtered.filter(s => s.forRole === 'all');
+  const managerSections = filtered.filter(s => s.forRole === 'manager');
   const leaderSections = filtered.filter(s => s.forRole === 'leader');
 
   return (
@@ -520,9 +522,15 @@ export default function KnowledgeBasePage() {
       </div>
 
       <div className="space-y-3">
-        {managerSections.length > 0 && (
+        {allSections.length > 0 && (
           <>
             <h2 className="font-display font-semibold text-foreground text-lg mt-4">📚 Основные функции</h2>
+            {allSections.map(s => <GuideItem key={s.id} section={s} />)}
+          </>
+        )}
+        {managerSections.length > 0 && (
+          <>
+            <h2 className="font-display font-semibold text-foreground text-lg mt-6">🎮 Для менеджера</h2>
             {managerSections.map(s => <GuideItem key={s.id} section={s} />)}
           </>
         )}
