@@ -177,12 +177,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     if (data.user) {
-      const { error: roleErr } = await supabase
+      // Триггер handle_new_user уже назначает роль leader первому пользователю.
+      // Здесь страхуемся для последующих регистраций "как руководитель".
+      const { data: existing } = await supabase
         .from('user_roles')
-        .insert({ user_id: data.user.id, role: 'leader' as 'leader' });
-      if (roleErr) {
-        console.error('[Auth] failed to assign leader role:', roleErr);
-        return { error: 'Аккаунт создан, но не удалось назначить роль руководителя. Обратитесь в поддержку.' };
+        .select('role')
+        .eq('user_id', data.user.id);
+      const hasLeader = (existing ?? []).some((r: any) => r.role === 'leader');
+      if (!hasLeader) {
+        const { error: roleErr } = await supabase
+          .from('user_roles')
+          .insert({ user_id: data.user.id, role: 'leader' as 'leader' });
+        if (roleErr && roleErr.code !== '23505') {
+          console.error('[Auth] failed to assign leader role:', roleErr);
+          return { error: 'Аккаунт создан, но не удалось назначить роль руководителя. Обратитесь в поддержку.' };
+        }
       }
     }
     return { error: null };

@@ -18,7 +18,7 @@ export default function TeamActivityPage() {
   useEffect(() => {
     load();
     const channel = supabase
-      .channel('team-activity')
+      .channel(`team-activity-${Math.random().toString(36).slice(2)}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'action_events' }, () => load())
       .subscribe();
     return () => { supabase.removeChannel(channel); };

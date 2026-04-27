@@ -46,8 +46,8 @@ export default function TeamChatPage() {
   useEffect(() => {
     if (!activeId) return;
     loadMessages();
-    const ch = supabase.channel('chat-' + activeId)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_messages', filter: `channel_id=eq.${activeId}` }, loadMessages)
+    const ch = supabase.channel(`chat-${activeId}-${Math.random().toString(36).slice(2)}`);
+    ch.on('postgres_changes', { event: '*', schema: 'public', table: 'chat_messages', filter: `channel_id=eq.${activeId}` }, loadMessages)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'message_reactions' }, loadMessages)
       .subscribe();
     return () => { supabase.removeChannel(ch); };

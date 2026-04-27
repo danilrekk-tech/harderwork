@@ -22,7 +22,8 @@ export default function AdminAuditLogTab() {
       setEntries((data as AuditEntry[]) || []);
     })();
 
-    const channel = supabase.channel('audit').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'audit_log' }, (payload) => {
+    const channel = supabase.channel(`audit-${Math.random().toString(36).slice(2)}`);
+    channel.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'audit_log' }, (payload) => {
       setEntries(prev => [payload.new as AuditEntry, ...prev].slice(0, 200));
     }).subscribe();
 
