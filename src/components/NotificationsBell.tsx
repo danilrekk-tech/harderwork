@@ -27,7 +27,8 @@ export default function NotificationsBell() {
     };
     load();
 
-    const channel = supabase.channel('notif-' + user.id)
+    const channel = supabase.channel(`notif-${user.id}-${Math.random().toString(36).slice(2)}`);
+    channel
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` }, (payload) => {
         const n = payload.new as Notification;
         setItems(prev => [n, ...prev]);
