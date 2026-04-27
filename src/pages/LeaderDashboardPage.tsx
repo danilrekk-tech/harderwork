@@ -81,7 +81,7 @@ export default function LeaderDashboardPage() {
 
   useEffect(() => {
     const channel = supabase
-      .channel('leader-dashboard')
+      .channel(`leader-dashboard-${Math.random().toString(36).slice(2)}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'invoices' }, () => loadDashboard())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'clients' }, () => loadDashboard())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => loadDashboard())
