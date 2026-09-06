@@ -1,73 +1,130 @@
-# Welcome to your Lovable project
+# Sales Spark
 
-## Project info
+я менеджер по продажам IT услуг и мне для анализа и мотивации нужно приложение которое поможет мне продавать больше за счет мотивации и напоминания. Функционал такой. подсчет выписанных чеков, подсчет оплаченных чеков, выполнение плана(настраиваемо по сумме или по количеству чеков), прогресс, количество обработанных клиентов, календарь напоминаний, с визуальным отображением количества клиентов на перезвон, напоминания о звонке клиенту(причем буду указывать время клиента на сколько договорились а програма должна напоминать мне по моему времени во сколько это должно состоятся), базовая карточка клиента с минимумом информации, преложение по которому звонил, статус сделки(выставлен счет, оплачен счет, обработан). работать должно как на ПК так и на телефоне. прогресс достижения плана сопряги с геймификацией. красивые анимации и понятный UI. белая тема, и напоминания о звонке отправляется в бота телеграм, чтобы в уведомлении было указаны сумма и причина звонка. добавь ачивки, и возможность зарабатывать и тратить XP на какие нибудь плюшки. Добавь режим администратора. доступ открыть можно через настройки.3. Личный кабинет менеджера
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+Разделы кабинета:
 
-## How can I edit this code?
+Dashboard
 
-There are several ways of editing your application.
+Счета
 
-**Use Lovable**
+Клиенты
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+Календарь
 
-Changes made via Lovable will be committed automatically to this repo.
+Достижения
 
-**Use your preferred IDE**
+Лидерборд
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+Магазин бустов
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+Настройки
 
-Follow these steps:
+4. Полностью кастомизируемый Dashboard:Dashboard должен быть настраиваемым как система виджетов.
+
+Менеджер может:
+
+добавлять виджеты
+
+удалять виджеты
+
+менять их расположение
+
+менять размер
+
+Виджеты можно перетаскивать (drag & drop).
+
+5. Возможные виджеты Dashboard
+
+Прогресс выполнения плана
+
+Отображает:
+
+план по счетам
+
+план по оплатам
+
+процент выполнения
+
+Использовать progress bar.
+
+Счета
+
+Показывает:
+
+выставленные счета
+
+оплаченные счета
+
+конверсию
+
+Клиенты
+
+Показывает:количество обработанных клиентов
+
+Остаток рабочих дней
+
+Показывает:
+
+сколько рабочих дней осталось до конца месяца
+
+Таймер смены
+
+Показывает:
+
+время до конца рабочей смены
+
+Лидерборд
+
+Топ менеджеров.
+
+Мотивационная панель
+
+Отображает мотивирующие фразы.Примеры:
+
+«Каждый звонок — шаг к сделке.»
+
+«Сегодня ты можешь побить свой рекорд.»
+
+«Сильные продавцы делают больше попыток.»
+
+«Сделка начинается с первого контакта.»
+
+Фразы должны обновляться автоматически.
+
+6. Настройка рабочего расписанияМенеджер может настроить:
+
+рабочие дни недели
+
+время начала смены
+
+время окончания смены
+
+Система должна показывать:
+
+время до конца смены
+
+оставшиеся рабочие дни месяца
+
+This project was built with [Lovable](https://lovable.dev).
+
+**Live app**: https://harderwork.lovable.app
+
+## Build with Lovable
+
+Continue developing this project in the [Lovable editor](https://lovable.dev/projects/c075199a-07c6-46a7-8635-88f6919aa1a3).
+
+- **Ship faster**: describe what you want to build and Lovable handles the code.
+- **Stay in sync**: every change made in Lovable is committed straight to this repository.
+- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
+
+## Development
+
+Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
+git clone <this-repository-url>
+cd <repository-name>
 npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
 npm run dev
 ```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
