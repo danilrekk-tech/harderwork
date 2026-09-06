@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Menu, X, LogOut } from 'lucide-react';
+import { LayoutDashboard, Menu, X, LogOut, Search, ChevronDown } from 'lucide-react';
 import NotificationsBell from '@/components/NotificationsBell';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -10,19 +10,34 @@ import { getSidebarItemsForRole } from '@/config/routes';
 
 export default function AppSidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const [collapsedSections, setCollapsedSections] = useState<string[]>([]);
   const { state } = useApp();
   const { role, signOut, profileName } = useAuth();
 
   // Auto-synced from src/config/routes.tsx — adding a route there shows it here automatically.
-  const navItems = [
-    { to: '/', icon: LayoutDashboard, label: 'Dashboard', section: 'Главное' },
+  const navItems = useMemo(() => [
+    { to: '/', icon: LayoutDashboard, label: 'Главная', section: 'Главное' },
     ...getSidebarItemsForRole(role).map((r) => ({
       to: r.path,
       icon: r.icon!,
       label: r.label!,
       section: r.section || 'Прочее',
     })),
-  ];
+  ], [role]);
+
+  const sections = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const filtered = q ? navItems.filter((i) => i.label.toLowerCase().includes(q) || i.section.toLowerCase().includes(q)) : navItems;
+    const map = new Map<string, typeof filtered>();
+    filtered.forEach((i) => {
+      const arr = map.get(i.section) || [];
+      arr.push(i);
+      map.set(i.section, arr);
+    });
+    return Array.from(map.entries());
+  }, [navItems, query]);
+
 
   const xpPercent = state.profile.xpToNextLevel > 0
     ? Math.min(100, (state.profile.xp / state.profile.xpToNextLevel) * 100)
@@ -66,28 +81,50 @@ export default function AppSidebar() {
         )}
       </div>
 
+      <div className="px-3 pt-3">
+        <div className="relative">
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Поиск раздела…"
+            className="w-full h-9 pl-9 pr-3 rounded-xl bg-muted/60 border border-transparent focus:border-primary/40 focus:bg-background outline-none text-sm transition-colors"
+          />
+        </div>
+      </div>
+
       <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto scrollbar-thin">
-        {navItems.map((item, idx) => {
-          const prevSection = idx > 0 ? (navItems[idx - 1] as any).section : null;
-          const showHeader = (item as any).section && (item as any).section !== prevSection;
+        {sections.map(([section, items]) => {
+          const collapsed = !query && collapsedSections.includes(section);
           return (
-            <div key={item.to}>
-              {showHeader && (
-                <div className="section-label px-3 pt-3 pb-1.5">{(item as any).section}</div>
-              )}
-              <NavLink
-                to={item.to}
-                end={item.to === '/'}
-                onClick={() => setMobileOpen(false)}
-                className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+            <div key={section} className="pb-1">
+              <button
+                onClick={() => setCollapsedSections((s) => s.includes(section) ? s.filter((x) => x !== section) : [...s, section])}
+                className="w-full flex items-center justify-between section-label px-3 pt-3 pb-1.5 hover:text-foreground transition-colors"
               >
-                <item.icon className="w-4 h-4 flex-shrink-0" />
-                <span className="text-sm">{item.label}</span>
-              </NavLink>
+                <span>{section}</span>
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform ${collapsed ? '-rotate-90' : ''}`} />
+              </button>
+              {!collapsed && items.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.to === '/'}
+                  onClick={() => setMobileOpen(false)}
+                  className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                >
+                  <item.icon className="w-4 h-4 flex-shrink-0" />
+                  <span className="text-sm">{item.label}</span>
+                </NavLink>
+              ))}
             </div>
           );
         })}
+        {sections.length === 0 && (
+          <p className="text-sm text-muted-foreground text-center py-6">Ничего не найдено</p>
+        )}
       </nav>
+
 
       <div className="p-4 border-t border-sidebar-border">
         <Button variant="ghost" size="sm" className="w-full justify-start text-muted-foreground" onClick={signOut}>
