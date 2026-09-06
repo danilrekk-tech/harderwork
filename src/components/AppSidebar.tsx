@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Menu, X, LogOut } from 'lucide-react';
+import { LayoutDashboard, Menu, X, LogOut, Search, ChevronDown } from 'lucide-react';
 import NotificationsBell from '@/components/NotificationsBell';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -10,19 +10,34 @@ import { getSidebarItemsForRole } from '@/config/routes';
 
 export default function AppSidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const [collapsedSections, setCollapsedSections] = useState<string[]>([]);
   const { state } = useApp();
   const { role, signOut, profileName } = useAuth();
 
   // Auto-synced from src/config/routes.tsx — adding a route there shows it here automatically.
-  const navItems = [
-    { to: '/', icon: LayoutDashboard, label: 'Dashboard', section: 'Главное' },
+  const navItems = useMemo(() => [
+    { to: '/', icon: LayoutDashboard, label: 'Главная', section: 'Главное' },
     ...getSidebarItemsForRole(role).map((r) => ({
       to: r.path,
       icon: r.icon!,
       label: r.label!,
       section: r.section || 'Прочее',
     })),
-  ];
+  ], [role]);
+
+  const sections = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const filtered = q ? navItems.filter((i) => i.label.toLowerCase().includes(q) || i.section.toLowerCase().includes(q)) : navItems;
+    const map = new Map<string, typeof filtered>();
+    filtered.forEach((i) => {
+      const arr = map.get(i.section) || [];
+      arr.push(i);
+      map.set(i.section, arr);
+    });
+    return Array.from(map.entries());
+  }, [navItems, query]);
+
 
   const xpPercent = state.profile.xpToNextLevel > 0
     ? Math.min(100, (state.profile.xp / state.profile.xpToNextLevel) * 100)
