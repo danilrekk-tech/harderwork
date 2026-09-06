@@ -635,16 +635,52 @@ export type Database = {
           },
         ]
       }
+      contest_participants: {
+        Row: {
+          contest_id: string
+          id: string
+          joined_at: string
+          progress: number
+          user_id: string
+        }
+        Insert: {
+          contest_id: string
+          id?: string
+          joined_at?: string
+          progress?: number
+          user_id: string
+        }
+        Update: {
+          contest_id?: string
+          id?: string
+          joined_at?: string
+          progress?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contest_participants_contest_id_fkey"
+            columns: ["contest_id"]
+            isOneToOne: false
+            referencedRelation: "contests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contests: {
         Row: {
+          auto_award: boolean
           created_at: string
           created_by: string | null
           description: string
           end_date: string
+          gift_id: string | null
           id: string
           is_active: boolean
           metric: string
           prize: string
+          prize_second: string
+          prize_third: string
           prize_xp: number
           start_date: string
           target: number
@@ -653,14 +689,18 @@ export type Database = {
           type: string
         }
         Insert: {
+          auto_award?: boolean
           created_at?: string
           created_by?: string | null
           description?: string
           end_date: string
+          gift_id?: string | null
           id?: string
           is_active?: boolean
           metric?: string
           prize?: string
+          prize_second?: string
+          prize_third?: string
           prize_xp?: number
           start_date: string
           target?: number
@@ -669,14 +709,18 @@ export type Database = {
           type?: string
         }
         Update: {
+          auto_award?: boolean
           created_at?: string
           created_by?: string | null
           description?: string
           end_date?: string
+          gift_id?: string | null
           id?: string
           is_active?: boolean
           metric?: string
           prize?: string
+          prize_second?: string
+          prize_third?: string
           prize_xp?: number
           start_date?: string
           target?: number
@@ -684,7 +728,15 @@ export type Database = {
           title?: string
           type?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "contests_gift_id_fkey"
+            columns: ["gift_id"]
+            isOneToOne: false
+            referencedRelation: "gifts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       daily_rewards: {
         Row: {
@@ -875,6 +927,83 @@ export type Database = {
           reward_xp?: number
           spun_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      gift_grants: {
+        Row: {
+          claimed_at: string | null
+          created_at: string
+          gift_id: string | null
+          granted_by: string | null
+          id: string
+          reason: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          claimed_at?: string | null
+          created_at?: string
+          gift_id?: string | null
+          granted_by?: string | null
+          id?: string
+          reason?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          claimed_at?: string | null
+          created_at?: string
+          gift_id?: string | null
+          granted_by?: string | null
+          id?: string
+          reason?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gift_grants_gift_id_fkey"
+            columns: ["gift_id"]
+            isOneToOne: false
+            referencedRelation: "gifts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gifts: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string
+          icon: string
+          id: string
+          is_active: boolean
+          kind: string
+          title: string
+          value: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          icon?: string
+          id?: string
+          is_active?: boolean
+          kind?: string
+          title: string
+          value?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          icon?: string
+          id?: string
+          is_active?: boolean
+          kind?: string
+          title?: string
+          value?: number
         }
         Relationships: []
       }
